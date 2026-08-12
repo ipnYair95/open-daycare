@@ -1,6 +1,6 @@
 # SPEC 01 — Home: feed estático idéntico al mockup
 
-> **Estado:** Borrador
+> **Estado:** Approved
 > **Depende de:** —
 > **Fecha:** 2026-08-12
 > **Objetivo:** Implementar la plantilla `references/pantallas/feed.dc.html` como home (`/`) con datos estáticos, sin autenticación ni base de datos, replicando el estilo de forma idéntica.
