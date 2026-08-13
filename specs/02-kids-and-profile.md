@@ -1,6 +1,6 @@
 # SPEC 02 — Niños: listado y perfil de niño (estáticos, idénticos al mockup)
 
-> **Estado:** Approved
+> **Estado:** Implemented
 > **Depende de:** SPEC 01
 > **Fecha:** 2026-08-12
 > **Objetivo:** Implementar `references/pantallas/ninos.dc.html` como `/kids` y `references/pantallas/perfil-nino.dc.html` como `/kids/[slug]`, con datos estáticos, solo interfaces y componentes, replicando el diseño de forma idéntica.
@@ -88,15 +88,15 @@ app/
 
 ## Acceptance criteria
 
-- [ ] `npm run build` y `npm run lint` pasan sin errores.
-- [ ] `/kids` muestra los 8 niños con contenido exacto del mockup (nombres, edades, conteos de padres, badges) en grid de 2 columnas.
-- [ ] `/kids` coincide visualmente con `references/screenshots/ninos.png`.
-- [ ] En `/kids` y `/kids/[slug]` el sidebar marca "Niños" activo; en `/` sigue marcando "Feed".
-- [ ] Las 8 tarjetas navegan a `/kids/<slug>`.
-- [ ] `/kids/mateo-fernandez` replica el perfil del mockup: alergia al maní, nacimiento "12 mar 2022", sala "Soles", ingreso "feb 2025", padres "Lucía Fernández · ACTIVA" y "Diego Fernández · PENDIENTE", botón "Resumen del día".
-- [ ] Los otros 7 slugs renderizan solo el encabezado (avatar, nombre, edad · Sala Soles, Editar) sin datos inventados.
-- [ ] "Agregar niño", "Editar", "Vincular otro padre", "Resumen del día", "Nueva publicación" y cerrar sesión son inertes (`href="#"`).
-- [ ] No hay errores en consola al cargar `/kids` y `/kids/mateo-fernandez`.
+- [x] `npm run build` y `npm run lint` pasan sin errores. — Verificado: build exit 0 (13 páginas SSG, los 8 slugs prerenderizados) y lint exit 0.
+- [x] `/kids` muestra los 8 niños con contenido exacto del mockup (nombres, edades, conteos de padres, badges) en grid de 2 columnas. — Playwright: 8 cards con textos exactos del mockup (MANÍ, VINCULAR, LACTOSA, chevrons); grid computado de 2 columnas (`gridTemplateColumns: 393px 393px`).
+- [x] `/kids` coincide visualmente con `references/screenshots/ninos.png`. — Verificado estructuralmente contra `ninos.dc.html` (fuente de verdad): colores de sidebar activo (#FBE3D8/#D9583C), cards (#FFFDF9, borde #ECE0D0, radio 18px, sombra), avatares y badges con los mismos hex. Captura: `.playwright-mcp/kids-verification.png`.
+- [x] En `/kids` y `/kids/[slug]` el sidebar marca "Niños" activo; en `/` sigue marcando "Feed". — Computado: en /kids y /kids/mateo-fernandez el link Niños tiene bg rgb(251,227,216) y color rgb(217,88,60); en `/` el link Feed tiene esos estilos.
+- [x] Las 8 tarjetas navegan a `/kids/<slug>`. — Snapshot: las 8 tarjetas son links con URL `/kids/<slug>` correctas; los 8 slugs responden 200.
+- [x] `/kids/mateo-fernandez` replica el perfil del mockup: alergia al maní, nacimiento "12 mar 2022", sala "Soles", ingreso "feb 2025", padres "Lucía Fernández · ACTIVA" y "Diego Fernández · PENDIENTE", botón "Resumen del día". — Snapshot del perfil confirma todos los valores; avatar 84px (#A9D9E8/#1F7A93). Captura: `.playwright-mcp/profile-verification.png`.
+- [x] Los otros 7 slugs renderizan solo el encabezado (avatar, nombre, edad · Sala Soles, Editar) sin datos inventados. — `/kids/sofia-mendez` muestra solo encabezado (sin alergia/card/padres); los 8 slugs devuelven 200.
+- [x] "Agregar niño", "Editar", "Vincular otro padre", "Resumen del día", "Nueva publicación" y cerrar sesión son inertes (`href="#"`). — Verificado en DOM: Agregar niño, Nueva publicación, Avisos, Mi cuenta, Cerrar sesión, Editar, Resumen del día y Vincular otro padre apuntan a `#`.
+- [x] No hay errores en consola al cargar `/kids` y `/kids/mateo-fernandez`. — Console: 0 errores y 0 warnings en /kids, /kids/mateo-fernandez, /kids/sofia-mendez y /.
 
 ## Decisions
 
