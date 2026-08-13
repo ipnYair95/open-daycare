@@ -1,8 +1,12 @@
+import Link from "next/link";
+
+export type SidebarSection = "feed" | "kids";
+
 const navItems = [
   {
+    id: "feed" as const,
     label: "Feed",
-    href: "#",
-    active: true,
+    href: "/",
     icon: (
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />
@@ -10,9 +14,9 @@ const navItems = [
     ),
   },
   {
+    id: "kids" as const,
     label: "Niños",
-    href: "#",
-    active: false,
+    href: "/kids",
     icon: (
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="9" cy="7" r="3" />
@@ -22,9 +26,9 @@ const navItems = [
     ),
   },
   {
+    id: "avisos" as const,
     label: "Avisos",
     href: "#",
-    active: false,
     icon: (
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0" />
@@ -32,9 +36,9 @@ const navItems = [
     ),
   },
   {
+    id: "account" as const,
     label: "Mi cuenta",
     href: "#",
-    active: false,
     icon: (
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -44,7 +48,7 @@ const navItems = [
   },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ active }: { active: SidebarSection }) {
   return (
     <aside className="sticky top-0 hidden h-screen w-[248px] flex-none flex-col border-r border-[#ECE0D0] bg-[#FFFDF9] p-4 px-4 py-6 lg:flex">
       <a href="#" className="flex items-center gap-[11px] pb-[22px] pl-2 pr-2 pt-1">
@@ -72,18 +76,18 @@ export default function Sidebar() {
 
       <nav className="flex flex-1 flex-col gap-1">
         {navItems.map((item) => (
-          <a
+          <Link
             key={item.label}
             href={item.href}
             className={`flex items-center gap-3 rounded-xl px-3 py-[11px] text-[14.5px] ${
-              item.active
+              item.id === active
                 ? "bg-[#FBE3D8] font-extrabold text-[#D9583C]"
                 : "bg-transparent font-semibold text-[#6E6359]"
             }`}
           >
             {item.icon}
             {item.label}
-          </a>
+          </Link>
         ))}
       </nav>
 
