@@ -20,14 +20,15 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Estado del proyecto
 
-- `app/` es todavía el starter de `create-next-app` (sin lógica real). La app se construye a partir de los mockups de `references/`.
+- Home feed implementado (`app/`, `app/components/`, `app/data/`) replicando `references/pantallas/feed.dc.html`. Spec `specs/01-home-feed.md` marcado como **Implemented**.
 - `references/pantallas/*.dc.html` son la **fuente de verdad del diseño** (UI de la guardería, en español). `support.js` es **generado** (dc-runtime) — no editarlo.
-- `references/screenshots/*.png` son capturas de referencia de las pantallas.
-- Todo el contenido de UI está en **español**.
+- `references/screenshots/*.png` son capturas de referencia de las pantallas (feed, ninos, compose, post-detail, parent-feed).
+- Todo el contenido de UI está en **español**. El código e identificadores van en inglés.
 
 ## Convenciones
 
 - Para features grandes: usar el flujo `/spec` → `/spec-impl` (skills en `.agents/skills/`). Los specs viven en `specs/`.
+- Verificación visual y de criterios de aceptación: agente `spec-verifier` (`.opencode/agent/spec-verifier.md`) usando Playwright MCP con visión y Context7.
 - Path alias `@/*` → raíz del repo (ej. `@/app/...`).
 - `.env*` está en `.gitignore`.
 
