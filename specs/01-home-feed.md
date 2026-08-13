@@ -1,6 +1,6 @@
 # SPEC 01 — Home: feed estático idéntico al mockup
 
-> **Estado:** Approved
+> **Estado:** Implemented
 > **Depende de:** —
 > **Fecha:** 2026-08-12
 > **Objetivo:** Implementar la plantilla `references/pantallas/feed.dc.html` como home (`/`) con datos estáticos, sin autenticación ni base de datos, replicando el estilo de forma idéntica.
@@ -123,13 +123,13 @@ Convenciones:
 
 ## Acceptance criteria
 
-- [ ] `npm run build` y `npm run lint` pasan sin errores.
-- [ ] `/` muestra los 3 posts del mockup con contenido exacto (nombres, horas, textos, conteos de likes/comentarios).
-- [ ] El estilo coincide con `references/screenshots/feed.png` (colores, tipografías, radios, sombras, layout).
-- [ ] El sidebar muestra los 5 enlaces del mockup y solo "Feed" aparece activo (fondo `#FBE3D8`, color `#D9583C`).
-- [ ] Ningún enlace del sidebar navega a una ruta real (todos inertes con `href="#"`).
-- [ ] La sidebar se oculta en viewports < 1024px.
-- [ ] No hay errores en consola al cargar `/`.
+- [x] `npm run build` y `npm run lint` pasan sin errores.
+- [x] `/` muestra los 3 posts del mockup con contenido exacto (nombres, horas, textos, conteos de likes/comentarios).
+- [x] El estilo coincide con `references/screenshots/feed.png` (colores, tipografías, radios, sombras, layout).
+- [x] El sidebar muestra los 5 enlaces del mockup y solo "Feed" aparece activo (fondo `#FBE3D8`, color `#D9583C`).
+- [x] Ningún enlace del sidebar navega a una ruta real (todos inertes con `href="#"`).
+- [x] La sidebar se oculta en viewports < 1024px.
+- [x] No hay errores en consola al cargar `/`.
 
 ## Decisions
 

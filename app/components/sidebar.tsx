@@ -46,7 +46,7 @@ const navItems = [
 
 export default function Sidebar() {
   return (
-    <aside className="sticky top-0 hidden h-screen w-[248px] flex-none flex-col bg-[#FFFDF9] p-4 px-4 py-6 lg:flex">
+    <aside className="sticky top-0 hidden h-screen w-[248px] flex-none flex-col border-r border-[#ECE0D0] bg-[#FFFDF9] p-4 px-4 py-6 lg:flex">
       <a href="#" className="flex items-center gap-[11px] pb-[22px] pl-2 pr-2 pt-1">
         <div className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-xl bg-[linear-gradient(155deg,#F8C3A8,#F2937A)]">
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">

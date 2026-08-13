@@ -5,32 +5,36 @@
   --font-display: var(--font-fredoka), var(--font-nunito), system-ui, sans-serif;
 }
 
-* {
-  box-sizing: border-box;
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
 }
 
-html,
-body {
-  margin: 0;
-  padding: 0;
-}
+@layer base {
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
 
-body {
-  -webkit-font-smoothing: antialiased;
-}
-
-a {
-  text-decoration: none;
-  color: inherit;
-}
-
-::-webkit-scrollbar {
-  width: 10px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #e4d6c4;
-  border-radius: 8px;
-  border: 3px solid transparent;
-  background-clip: content-box;
+  ::-webkit-scrollbar-thumb {
+    background: #e4d6c4;
+    border-radius: 8px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
 }
