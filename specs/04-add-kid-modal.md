@@ -1,6 +1,6 @@
 # SPEC 04 — Modal "Agregar niño" (estático, idéntico al mockup)
 
-> **Estado:** Approved
+> **Estado:** Implemented
 > **Depende de:** SPEC 02
 > **Fecha:** 2026-08-14
 > **Objetivo:** Implementar `references/pantallas/agregar-nino.dc.html` como un modal superpuesto en `/kids`, abierto por el botón superior "Agregar niño", con formulario estático y acciones inertes, replicando el diseño de forma idéntica.
