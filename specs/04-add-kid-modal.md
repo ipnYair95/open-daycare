@@ -46,15 +46,15 @@ app/
 
 ## Acceptance criteria
 
-- [] `npm run build` y `npm run lint` pasan sin errores. — Verificado: build OK (15 rutas) y eslint sin errores.
-- [] En `/kids`, el botón "Agregar niño" abre el modal (overlay visible con la card de 520px) y el listado sigue intacto detrás. — Verificado con Playwright: card 520px, listado "8 niños" y cards presentes detrás del overlay.
-- [] El modal replica el mockup con campos y placeholders exactos (NOMBRE COMPLETO `Ej. Martina López`, FECHA DE NACIMIENTO `dd/mm/aaaa`, SALA `Soles`, ALERGIAS `Ej. Maní, Lactosa`, NOTAS MÉDICAS `Indicaciones, medicación, contactos…`). — Verificado vía snapshot accesible y computed styles.
-- [] SALA es un dropdown funcional: al abrirlo muestra las salas existentes, permite seleccionar y refleja la opción elegida. — `<select>` nativo estilizado con chevron; opciones derivadas de `kids.ts` (solo `Soles` existe hoy); refleja la selección.
-- [] FECHA DE NACIMIENTO obliga al formato `dd/mm/aaaa`: solo admite dígitos y barras, auto-inserta las `/` y muestra error si el valor no coincide con el formato. — Verificado: `12122022`→`12/12/2022`; `01012026x`→`01/01/2026` (letras descartadas); al blur con `01/01` muestra "Formato inválido: usa dd/mm/aaaa", borde `#D9583C` y `aria-invalid`.
-- [] "Cancelar" cierra el modal y clic en el backdrop también. — Ambos verificados con Playwright (el modal desaparece del DOM).
-- [] "Guardar" es inerte (`href="#"`) y no añade ningún niño ni persiste nada. — `href="#"` (URL pasa a `/kids#` sin navegación), sigue "8 niños" en el listado.
-- [] Estilos coinciden con el mockup (borde `#ECE0D0`, radio 24px, fondo `#FBF4EC`, inputs `#EADFD0`, tipografía Fredoka/Nunito). — Verificado: border `rgb(236,224,208)`, radius 24px, bg `rgb(251,244,236)`, inputs border `rgb(234,223,208)`/radius 14px, título Fredoka 600, body Nunito, placeholder `#B6A99B`, sombra `0 20px 50px -24px rgba(63,54,46,.35)`.
-- [] Sin errores en consola al abrir y cerrar el modal en `/kids`. — 0 errores/0 warnings en consola durante apertura, cierre y clics.
+- [x] `npm run build` y `npm run lint` pasan sin errores. — Verificado: build OK (15 rutas) y eslint sin errores.
+- [x] En `/kids`, el botón "Agregar niño" abre el modal (overlay visible con la card de 520px) y el listado sigue intacto detrás. — Verificado con Playwright: card 520px, listado "8 niños" y cards presentes detrás del overlay.
+- [x] El modal replica el mockup con campos y placeholders exactos (NOMBRE COMPLETO `Ej. Martina López`, FECHA DE NACIMIENTO `dd/mm/aaaa`, SALA `Soles`, ALERGIAS `Ej. Maní, Lactosa`, NOTAS MÉDICAS `Indicaciones, medicación, contactos…`). — Verificado vía snapshot accesible y computed styles.
+- [x] SALA es un dropdown funcional: al abrirlo muestra las salas existentes, permite seleccionar y refleja la opción elegida. — `<select>` nativo estilizado con chevron; opciones derivadas de `kids.ts` (solo `Soles` existe hoy); refleja la selección.
+- [x] FECHA DE NACIMIENTO obliga al formato `dd/mm/aaaa`: solo admite dígitos y barras, auto-inserta las `/` y muestra error si el valor no coincide con el formato. — Verificado: `12122022`→`12/12/2022`; `01012026x`→`01/01/2026` (letras descartadas); al blur con `01/01` muestra "Fecha inválida: usa dd/mm/aaaa", borde `#D9583C` y `aria-invalid`.
+- [x] "Cancelar" cierra el modal y clic en el backdrop también. — Ambos verificados con Playwright (el modal desaparece del DOM).
+- [x] "Guardar" es inerte (`href="#"`) y no añade ningún niño ni persiste nada. — `href="#"` (URL pasa a `/kids#` sin navegación), sigue "8 niños" en el listado.
+- [x] Estilos coinciden con el mockup (borde `#ECE0D0`, radio 24px, fondo `#FBF4EC`, inputs `#EADFD0`, tipografía Fredoka/Nunito). — Verificado: border `rgb(236,224,208)`, radius 24px, bg `rgb(251,244,236)`, inputs border `rgb(234,223,208)`/radius 14px, título Fredoka 600, body Nunito, placeholder `#B6A99B`, sombra `0 20px 50px -24px rgba(63,54,46,.35)`.
+- [x] Sin errores en consola al abrir y cerrar el modal en `/kids`. — 0 errores/0 warnings en consola durante apertura, cierre y clics.
 
 ## Decisions
 
