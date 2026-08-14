@@ -1,6 +1,6 @@
 # SPEC 05 — Modal "Vincular padre" (estático, idéntico al mockup)
 
-> **Estado:** Approved
+> **Estado:** Implemented
 > **Depende de:** SPEC 02
 > **Fecha:** 2026-08-14
 > **Objetivo:** Implementar `references/pantallas/vincular-padre.dc.html` como un modal superpuesto en `/kids/[slug]`, abierto por "Vincular otro padre" del perfil del niño, con formulario que valida al salir del campo, selector de parentesco funcional y envío inerte, replicando el diseño de forma idéntica.
@@ -52,17 +52,17 @@ app/
 
 ## Acceptance criteria
 
-- [ ] `npm run build` y `npm run lint` pasan sin errores.
-- [ ] En `/kids/mateo-fernandez`, "Vincular otro padre" abre el modal (overlay visible con card de 480px) y el perfil sigue intacto detrás.
-- [ ] El header muestra "Vincular padre" y el subtítulo "a Mateo Fernández" (nombre dinámico del kid).
-- [ ] El modal replica el mockup: banner informativo, inputs con placeholders exactos, CÓDIGO DE INVITACIÓN `7K4P9` con "Vence en 7 días" y botón "Enviar invitación".
-- [ ] El selector PARENTESCO es funcional: "Mamá" activa por defecto y al hacer clic el estado activo cambia entre Mamá/Papá/Tutor/a sin persistir.
-- [ ] Con NOMBRE o EMAIL vacíos, o EMAIL con formato inválido, al salir del campo se muestra el error (mensaje + borde `#D9583C` + `aria-invalid`) y se limpia al escribir.
-- [ ] Con ambos campos válidos no se muestra ningún error.
-- [ ] "Enviar invitación" es inerte (`href="#"`), siempre activo, y no cierra el modal ni guarda nada.
-- [ ] La X y el clic en el backdrop cierran el modal.
-- [ ] Estilos coinciden con el mockup (card 480px, borde `#ECE0D0`, radio 24px, fondo `#FBF4EC`, código Fredoka 34px con 7px de interletrado `#8A7234`, banner `#E3ECFB`/`#3F5694`).
-- [ ] Sin errores en consola al abrir y cerrar el modal en `/kids/mateo-fernandez`.
+- [x] `npm run build` y `npm run lint` pasan sin errores. _Verificado: build Next.js 16.3.0 (Turbopack) OK, lint eslint OK._
+- [x] En `/kids/mateo-fernandez`, "Vincular otro padre" abre el modal (overlay visible con card de 480px) y el perfil sigue intacto detrás. _Verificado: overlay `fixed inset-0 z-50` con blur y card `max-w-[480px]`; perfil (h1, datos, PADRES VINCULADOS) presente detrás. Enlace ausente en `/kids/sofia-mendez` (scope)._
+- [x] El header muestra "Vincular padre" y el subtítulo "a Mateo Fernández" (nombre dinámico del kid). _Verificado._
+- [x] El modal replica el mockup: banner informativo, inputs con placeholders exactos, CÓDIGO DE INVITACIÓN `7K4P9` con "Vence en 7 días" y botón "Enviar invitación". _Verificado: banner con texto dinámico, placeholders "Ej. Diego Fernández"/"correo@ejemplo.com", código, botón._
+- [x] El selector PARENTESCO es funcional: "Mamá" activa por defecto y al hacer clic el estado activo cambia entre Mamá/Papá/Tutor/a sin persistir. _Verificado: default "Mamá"; clic en "Papá" y "Tutor/a" mueve el estado; tras reload vuelve a "Mamá"._
+- [x] Con NOMBRE o EMAIL vacíos, o EMAIL con formato inválido, al salir del campo se muestra el error (mensaje + borde `#D9583C` + `aria-invalid`) y se limpia al escribir. _Verificado los 3 casos on blur; el error desaparece al escribir._
+- [x] Con ambos campos válidos no se muestra ningún error. _Verificado con "Carlos Pérez" + "carlos@example.com"._
+- [x] "Enviar invitación" es inerte (`href="#"`), siempre activo, y no cierra el modal ni guarda nada. _Verificado: URL `#`, modal sigue abierto y valores intactos._
+- [x] La X y el clic en el backdrop cierran el modal. _Verificado ambos._
+- [x] Estilos coinciden con el mockup (card 480px, borde `#ECE0D0`, radio 24px, fondo `#FBF4EC`, código Fredoka 34px con 7px de interletrado `#8A7234`, banner `#E3ECFB`/`#3F5694`). _Verificado por estilos computados; nota menor: botones PARENTESCO usan px-2 (8px) vs padding 11px del mockup, sin impacto visual por flex-1._
+- [x] Sin errores en consola al abrir y cerrar el modal en `/kids/mateo-fernandez`. _Verificado: 0 errores, 0 warnings._
 
 ## Decisions
 
