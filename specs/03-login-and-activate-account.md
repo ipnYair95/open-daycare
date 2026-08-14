@@ -1,6 +1,6 @@
 # SPEC 03 — Login y activación de cuenta (estáticos, idénticos a los mockups)
 
-> **Estado:** Approved
+> **Estado:** Implemented
 > **Depende de:** SPEC 01 (el login navega al feed `/`)
 > **Fecha:** 2026-08-14
 > **Objetivo:** Implementar `references/pantallas/login.dc.html` como `/auth/login` (sin el selector Personal/Familia) y `references/pantallas/activar-cuenta.dc.html` como `/auth/activate-account`, estáticas y con valores hardcodeados, replicando el diseño de forma idéntica.
@@ -51,15 +51,15 @@ app/
 
 ## Acceptance criteria
 
-- [ ] `npm run build` y `npm run lint` pasan sin errores.
-- [ ] `/auth/login` replica el mockup sin el selector Personal/Familia (formulario con solo EMAIL, CONTRASEÑA e "Iniciar sesión").
-- [ ] "Iniciar sesión" navega a `/`.
-- [ ] "¿Olvidaste tu contraseña?" es inerte (`href="#"`).
-- [ ] "Activá tu cuenta" (login) navega a `/auth/activate-account` y "Iniciar sesión" (activar-cuenta) navega a `/auth/login`.
-- [ ] `/auth/activate-account` replica el mockup con valores exactos (Mateo · Sala Soles, `7K4P9`, `lucia.fernandez@gmail.com`) y el checkbox de consentimiento marcado.
-- [ ] "Activar mi cuenta" es inerte (`href="#"`).
-- [ ] Estilos coinciden con los `.dc.html` (gradientes, colores, radios, tipografías).
-- [ ] Sin errores en consola al cargar `/auth/login` y `/auth/activate-account`.
+- [x] `npm run build` y `npm run lint` pasan sin errores. — Verificado: `next build` compila (15 páginas estáticas, ambas rutas `○ Static`) y `eslint` sin salida.
+- [x] `/auth/login` replica el mockup sin el selector Personal/Familia (formulario con solo EMAIL, CONTRASEÑA e "Iniciar sesión"). — Verificado con Playwright: sin sección "INGRESO COMO"; EMAIL `caro@opendaycare.com`, CONTRASEÑA placeholder `••••••••`.
+- [x] "Iniciar sesión" navega a `/`. — Verificado: click en el `Link` → URL `http://localhost:3000/`.
+- [x] "¿Olvidaste tu contraseña?" es inerte (`href="#"`). — Verificado: `a[href="#"]`, color `#C5503A`, 13.5px.
+- [x] "Activá tu cuenta" (login) navega a `/auth/activate-account` y "Iniciar sesión" (activar-cuenta) navega a `/auth/login`. — Verificado: ambos clicks navegan correctamente.
+- [x] `/auth/activate-account` replica el mockup con valores exactos (Mateo · Sala Soles, `7K4P9`, `lucia.fernandez@gmail.com`) y el checkbox de consentimiento marcado. — Verificado: `checkbox.checked === true`; inputs con los valores hardcodeados.
+- [x] "Activar mi cuenta" es inerte (`href="#"`). — Verificado: `a[href="#"]` con gradiente/sombra del mockup.
+- [x] Estilos coinciden con los `.dc.html` (gradientes, colores, radios, tipografías). — Verificado vía computed styles: gradiente `155deg #F6A98E→#F2937A→#EC7E62`, fondo `#FBF4EC`, radios 14/15/16px, bordes `#EADFD0`/`#F2A78E`, avatar `#A9D9E8`/`#1F7A93`, Fredoka/Nunito vía `next/font` (h1 42px, h2 30px, código 18px/3px/700).
+- [x] Sin errores en consola al cargar `/auth/login` y `/auth/activate-account`. — Verificado: 0 errores y 0 warnings en ambas rutas (Playwright).
 
 ## Decisions
 
