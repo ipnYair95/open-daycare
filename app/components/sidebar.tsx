@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ComposePostModal from "@/app/components/compose-post-modal";
 
 export type SidebarSection = "feed" | "kids";
 
@@ -64,15 +65,7 @@ export default function Sidebar({ active }: { active: SidebarSection }) {
         </div>
       </a>
 
-      <a
-        href="#"
-        className="mb-[18px] flex w-full items-center justify-center gap-2 rounded-[14px] bg-[linear-gradient(180deg,#F4977E,#EE8164)] px-4 py-3 font-extrabold text-[14.5px] text-white shadow-[0_8px_18px_-8px_rgba(238,129,100,.75)]"
-      >
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-        Nueva publicación
-      </a>
+      <ComposePostModal />
 
       <nav className="flex flex-1 flex-col gap-1">
         {navItems.map((item) => (
