@@ -12,15 +12,14 @@
 - Botón "Agregar niño" del header de `/kids` (hoy `href="#"`) pasa a abrir un modal superpuesto (overlay).
 - Modal `agregar-nino.dc.html` como componente cliente: backdrop difuminado + card de 520px centrada.
 - Header del modal: "Cancelar" (cierra el modal), título "Agregar niño", "Guardar" inerte (`href="#"`).
-- Formulario estático con los campos exactos del mockup: NOMBRE COMPLETO (`Ej. Martina López`), FECHA DE NACIMIENTO (`dd/mm/aaaa`), SALA (estático `Soles` con chevron), ALERGIAS (ETIQUETAS) (`Ej. Maní, Lactosa`), NOTAS MÉDICAS (textarea `Indicaciones, medicación, contactos…`).
+- Formulario con los campos exactos del mockup: NOMBRE COMPLETO (`Ej. Martina López`), FECHA DE NACIMIENTO (`dd/mm/aaaa`, con formato obligatorio), SALA (dropdown funcional con chevron, opciones derivadas de las salas existentes), ALERGIAS (ETIQUETAS) (`Ej. Maní, Lactosa`), NOTAS MÉDICAS (textarea `Indicaciones, medicación, contactos…`).
 - Verificación visual con Playwright contra `agregar-nino.dc.html` (no existe screenshot de referencia).
 
 **Out of scope (para specs futuros):**
 
 - Guardar funcional (añadir un niño a la lista), persistencia ni estado del nuevo niño.
 - Búsqueda funcional.
-- Dropdown SALA funcional.
-- Validación de campos.
+- Validación de campos en general (solo el formato de fecha es obligatorio, ver In).
 - Autenticación, BD.
 
 ## Data model
@@ -47,21 +46,23 @@ app/
 
 ## Acceptance criteria
 
-- [ ] `npm run build` y `npm run lint` pasan sin errores.
-- [ ] En `/kids`, el botón "Agregar niño" abre el modal (overlay visible con la card de 520px) y el listado sigue intacto detrás.
-- [ ] El modal replica el mockup con campos y placeholders exactos (NOMBRE COMPLETO `Ej. Martina López`, FECHA DE NACIMIENTO `dd/mm/aaaa`, SALA `Soles`, ALERGIAS `Ej. Maní, Lactosa`, NOTAS MÉDICAS `Indicaciones, medicación, contactos…`).
-- [ ] "Cancelar" cierra el modal y clic en el backdrop también.
-- [ ] "Guardar" es inerte (`href="#"`) y no añade ningún niño ni persiste nada.
-- [ ] Estilos coinciden con el mockup (borde `#ECE0D0`, radio 24px, fondo `#FBF4EC`, inputs `#EADFD0`, tipografía Fredoka/Nunito).
-- [ ] Sin errores en consola al abrir y cerrar el modal en `/kids`.
+- [] `npm run build` y `npm run lint` pasan sin errores. — Verificado: build OK (15 rutas) y eslint sin errores.
+- [] En `/kids`, el botón "Agregar niño" abre el modal (overlay visible con la card de 520px) y el listado sigue intacto detrás. — Verificado con Playwright: card 520px, listado "8 niños" y cards presentes detrás del overlay.
+- [] El modal replica el mockup con campos y placeholders exactos (NOMBRE COMPLETO `Ej. Martina López`, FECHA DE NACIMIENTO `dd/mm/aaaa`, SALA `Soles`, ALERGIAS `Ej. Maní, Lactosa`, NOTAS MÉDICAS `Indicaciones, medicación, contactos…`). — Verificado vía snapshot accesible y computed styles.
+- [] SALA es un dropdown funcional: al abrirlo muestra las salas existentes, permite seleccionar y refleja la opción elegida. — `<select>` nativo estilizado con chevron; opciones derivadas de `kids.ts` (solo `Soles` existe hoy); refleja la selección.
+- [] FECHA DE NACIMIENTO obliga al formato `dd/mm/aaaa`: solo admite dígitos y barras, auto-inserta las `/` y muestra error si el valor no coincide con el formato. — Verificado: `12122022`→`12/12/2022`; `01012026x`→`01/01/2026` (letras descartadas); al blur con `01/01` muestra "Formato inválido: usa dd/mm/aaaa", borde `#D9583C` y `aria-invalid`.
+- [] "Cancelar" cierra el modal y clic en el backdrop también. — Ambos verificados con Playwright (el modal desaparece del DOM).
+- [] "Guardar" es inerte (`href="#"`) y no añade ningún niño ni persiste nada. — `href="#"` (URL pasa a `/kids#` sin navegación), sigue "8 niños" en el listado.
+- [] Estilos coinciden con el mockup (borde `#ECE0D0`, radio 24px, fondo `#FBF4EC`, inputs `#EADFD0`, tipografía Fredoka/Nunito). — Verificado: border `rgb(236,224,208)`, radius 24px, bg `rgb(251,244,236)`, inputs border `rgb(234,223,208)`/radius 14px, título Fredoka 600, body Nunito, placeholder `#B6A99B`, sombra `0 20px 50px -24px rgba(63,54,46,.35)`.
+- [] Sin errores en consola al abrir y cerrar el modal en `/kids`. — 0 errores/0 warnings en consola durante apertura, cierre y clics.
 
 ## Decisions
 
 - **Sí:** Modal como overlay cliente en `/kids` en vez de una ruta o una intercepting route (decisión del usuario; es lo más simple y coincide con "modal que se abre desde /kids").
 - **Sí:** "Guardar" inerte y "Cancelar"/backdrop cierran el modal (patrón estático del proyecto, igual que SPEC 01/02/03).
 - **Sí:** Sin persistencia ni estado de niño nuevo; el modal es solo visual.
-- **Sí:** SALA estático `Soles` con chevron, sin dropdown funcional.
-- **No:** Añadir niño a la lista, búsqueda, validación, persistencia ni dropdown funcional.
+- **Sí:** SALA es un dropdown funcional (`<select>` nativo estilizado, con chevron), cuyas opciones provienen de las salas existentes en los datos (hoy solo `Soles`).
+- **No:** Añadir niño a la lista, búsqueda, validación de campos en general ni persistencia.
 
 ## Risks
 
