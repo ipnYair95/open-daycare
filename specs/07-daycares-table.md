@@ -1,6 +1,6 @@
 # SPEC 07 — Tabla `daycares` con RLS y seed (primera migración Supabase)
 
-> **Estado:** Approved
+> **Estado:** Implemented
 > **Depende de:** —
 > **Fecha:** 2026-09-07
 > **Objetivo:** Crear la tabla `daycares` como primera migración Supabase imperativa con RLS activado, políticas de lectura y escritura y 5 guarderías de ejemplo.
@@ -98,14 +98,14 @@ supabase/
 
 ## Acceptance criteria
 
-- [ ] `supabase/migrations/*_create_daycares.sql` existe y contiene `CREATE TABLE public.daycares` con `id uuid PK default gen_random_uuid()`, `name text NOT NULL CHECK (char_length(name)>0)`, `created_at timestamptz NOT NULL default now()`.
-- [ ] `SELECT extname FROM pg_extension WHERE extname='pgcrypto'` retorna 1 fila.
-- [ ] `SELECT relrowsecurity FROM pg_class WHERE relname='daycares'` es `true`.
-- [ ] `SELECT count(*) FROM pg_policies WHERE tablename='daycares'` es 4 y `SELECT policyname, cmd FROM pg_policies WHERE tablename='daycares'` contiene `daycares_select_authenticated` (SELECT), `daycares_insert_authenticated` (INSERT), `daycares_update_authenticated` (UPDATE), `daycares_delete_authenticated` (DELETE), todas `TO authenticated`.
-- [ ] `SELECT count(*) FROM public.daycares` es 5 y `SELECT name FROM public.daycares` contiene los 5 nombres exactos del seed.
-- [ ] Re-aplicar el seed no duplica filas (idempotente vía `WHERE NOT EXISTS`).
-- [ ] `npx supabase db advisors` no reporta hallazgos `security` para `daycares` (RLS habilitado).
-- [ ] `npm run build` y `npm run lint` pasan sin errores.
+- [x] `supabase/migrations/*_create_daycares.sql` existe y contiene `CREATE TABLE public.daycares` con `id uuid PK default gen_random_uuid()`, `name text NOT NULL CHECK (char_length(name)>0)`, `created_at timestamptz NOT NULL default now()` — verificado `supabase/migrations/20260907231345_create_daycares.sql` contiene DDL exacto.
+- [x] `SELECT extname FROM pg_extension WHERE extname='pgcrypto'` retorna 1 fila — verificado 1 fila `pgcrypto`.
+- [x] `SELECT relrowsecurity FROM pg_class WHERE relname='daycares'` es `true` — verificado `true` y `rls_enabled:true` en `list_tables`.
+- [x] `SELECT count(*) FROM pg_policies WHERE tablename='daycares'` es 4 y `SELECT policyname, cmd FROM pg_policies WHERE tablename='daycares'` contiene `daycares_select_authenticated` (SELECT), `daycares_insert_authenticated` (INSERT), `daycares_update_authenticated` (UPDATE), `daycares_delete_authenticated` (DELETE), todas `TO authenticated` — verificado 4 políticas `TO authenticated`.
+- [x] `SELECT count(*) FROM public.daycares` es 5 y `SELECT name FROM public.daycares` contiene los 5 nombres exactos del seed — verificado 5 filas ordenadas.
+- [x] Re-aplicar el seed no duplica filas (idempotente vía `WHERE NOT EXISTS`) — verificado re-insert retorna `cnt:5`.
+- [x] `npx supabase db advisors` no reporta hallazgos `security` para `daycares` (RLS habilitado) — verificado `get_advisors` security solo 2 WARN de `rls_auto_enable` (no `daycares`), performance 0.
+- [x] `npm run build` y `npm run lint` pasan sin errores — verificado `build` exit 0, `lint` 0 errors (1 warning pre-existente `no-img-element`).
 
 ## Decisions
 
