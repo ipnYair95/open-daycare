@@ -29,7 +29,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Convenciones
 
-- Para features grandes: usar el flujo `/spec` → `/spec-impl` (skills en `.agents/skills/`). Los specs viven en `specs/`.
+- Para features grandes: usar el flujo `/spec` → `/spec-impl` (skills en `.agents/skills/`). Los specs viven en `specs/`; los relacionados con base de datos van en `specs/database/` (tablas, enums, RLS, migraciones, seeds, funciones SQL).
 - Verificación visual y de criterios de aceptación: agente `spec-verifier` (`.opencode/agent/spec-verifier.md`) usando Playwright MCP con visión y Context7.
 - Path alias `@/*` → raíz del repo (ej. `@/app/...`).
 - `.env*` está en `.gitignore`.
@@ -39,12 +39,12 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Schema de referencia: `../07-DB-Schema` (definido en `opencode.json` → `references.docs`). No es código implementado, solo referencia de tablas/columnas.
 - CLI: `npx supabase --help` para descubrir comandos (estructura cambia entre versiones). `supabase --version` actual: `2.117.0`.
 - **Migraciones obligatorias — toda manipulación de BD debe ir versionada:** nunca ejecutes DDL/DML directo sin migración. Todo cambio (tablas, columnas, índices, RLS, políticas, seeds, funciones) va en `supabase/migrations/<timestamp>_<name>.sql`.
-- Flujo imperativo (usado en este repo): `npx supabase migration new <name>` → iterar SQL vía `execute_sql` (MCP) o `npx supabase db query` (sin `apply_migration` — evita historial prematuro) → verificar `pg_class`/`pg_policies` → `get_advisors` → consolidar migración con `npx supabase db pull --local --yes` (requiere Docker + `npx supabase start`) y verificar `npx supabase migration list --local`. Si Docker no está disponible, escribir el archivo manualmente con el mismo contenido y documentar el prerequisito — ver `specs/07-daycares-table.md` y `.agents/skills/supabase/SKILL.md` §Making Schema Changes. Declarativo (`supabase/schemas/`) no aplica en este repo.
+- Flujo imperativo (usado en este repo): `npx supabase migration new <name>` → iterar SQL vía `execute_sql` (MCP) o `npx supabase db query` (sin `apply_migration` — evita historial prematuro) → verificar `pg_class`/`pg_policies` → `get_advisors` → consolidar migración con `npx supabase db pull --local --yes` (requiere Docker + `npx supabase start`) y verificar `npx supabase migration list --local`. Si Docker no está disponible, escribir el archivo manualmente con el mismo contenido y documentar el prerequisito — ver `specs/database/07-daycares-table.md` y `.agents/skills/supabase/SKILL.md` §Making Schema Changes. Declarativo (`supabase/schemas/`) no aplica en este repo.
 - Seguridad: RLS obligatorio en `public`, `security_invoker=true` en vistas, `TO authenticated` + `USING`/`WITH CHECK`, nunca `SECURITY DEFINER` para arreglar permisos — ver checklist en skill `supabase`.
 
 ## Skills instaladas
 
-- `spec` (`.agents/skills/spec/`) — diseño guiado de specs, genera `specs/NN-slug.md` desde `template.md`.
+- `spec` (`.agents/skills/spec/`) — diseño guiado de specs, genera `specs/NN-slug.md` (o `specs/database/NN-slug.md` si es de BD) desde `template.md`.
 - `spec-impl` (`.agents/skills/spec-impl/`) — implementa specs aprobados (valida estado `Approved`, crea branch, implementa paso a paso).
 - `supabase` (`.agents/skills/supabase/` v0.1.2) — guía para Supabase (DB/Auth/Storage/Edge Functions/Realtime, SSR con `@supabase/ssr`, RLS, CLI, MCP `search_docs`/`execute_sql`/`get_advisors`).
 - `supabase-postgres-best-practices` (`.agents/skills/supabase-postgres-best-practices/` v1.1.1) — reglas de Postgres (query, conexiones, RLS, schema, locks, etc.). Duplicada en `.claude/skills/` para compatibilidad.

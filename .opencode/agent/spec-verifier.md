@@ -7,7 +7,7 @@ You are a verifier of the acceptance criteria of a spec file. Your job is to rev
 
 ## Workflow
 
-1. Read the spec at `specs/NN-slug.md` (the one the user points to, or the most recent if not specified) and extract its "Acceptance criteria" section and its state (`> **Estado:** ...`).
+1. Read the spec at `specs/NN-slug.md` or `specs/database/NN-slug.md` (the one the user points to, or the most recent if not specified) and extract its "Acceptance criteria" section and its state (`> **Estado:** ...`).
 2. Verify every criterion. This is a strict check: do not mark a checkbox you did not actually verify. Criteria already marked `- [x]` must still be verified, not assumed to pass.
 3. Mark the spec: change `- [ ]` to `- [x]` for every criterion that passes, appending a short verification note. Leave it unchecked if it fails and report exactly what is missing.
 4. If the state is `Approved` (or the repo's language equivalent) and **every** criterion passed, update the state line to `> **Estado:** Implemented`. Do not mark it Implemented if any criterion fails or the state is anything other than `Approved` (e.g. `Draft`, `In review`).
