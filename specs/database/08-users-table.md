@@ -1,6 +1,6 @@
 # SPEC 08 — Tabla `users` con enums, FK a `daycares`/`auth.users`, RLS, trigger de signup y seed staff
 
-> **Estado:** Approved
+> **Estado:** Implemented
 > **Depende de:** SPEC 07
 > **Fecha:** 2026-09-07
 > **Objetivo:** Crear los enums `user_role`/`user_status` y la tabla `public.users` vinculada a `auth.users` y `daycares` con RLS permisiva, trigger de creación automática en signup y seed idempotente de 1 usuario staff para pruebas.
@@ -154,16 +154,16 @@ supabase/
 
 ## Acceptance criteria
 
-- [ ] `supabase/migrations/*_create_users.sql` existe y contiene `CREATE TYPE public.user_role` con `staff,parent,admin` y `CREATE TYPE public.user_status` con `pending,active`.
-- [ ] `supabase/migrations/*_create_users.sql` contiene `CREATE TABLE public.users` con `id uuid PK FK → auth.users ON DELETE CASCADE`, `daycare_id uuid NOT NULL FK → daycares ON DELETE RESTRICT`, `role user_role NOT NULL`, `status user_status NOT NULL DEFAULT 'active'`, `full_name text NOT NULL CHECK (char_length>0)`, `avatar_url text`, `notify_on_post boolean NOT NULL DEFAULT true`, `daily_summary_enabled boolean NOT NULL DEFAULT true`, `created_at/updated_at timestamptz NOT NULL DEFAULT now()` e índice `users_daycare_id_idx`.
-- [ ] `SELECT relrowsecurity FROM pg_class WHERE relname='users'` es `true`.
-- [ ] `SELECT count(*) FROM pg_policies WHERE tablename='users'` es 4 y contiene `users_select_authenticated` (SELECT), `users_insert_authenticated` (INSERT), `users_update_authenticated` (UPDATE), `users_delete_authenticated` (DELETE), todas `TO authenticated`.
-- [ ] `SELECT tgname FROM pg_trigger WHERE tgname='handle_users_updated_at'` existe y `SELECT tgname FROM pg_trigger WHERE tgname='on_auth_user_created'` existe con `tgrelid = 'auth.users'::regclass`.
-- [ ] `SELECT email, raw_user_meta_data FROM auth.users WHERE email='yair@mail.com'` retorna 1 fila con `raw_user_meta_data` conteniendo `daycare_id`, `role=staff`, `full_name='Caro Giménez'` y `email_confirmed_at NOT NULL`.
-- [ ] `SELECT full_name, role, status FROM public.users WHERE id = (SELECT id FROM auth.users WHERE email='yair@mail.com')` retorna `Caro Giménez, staff, active` y `daycare_id` coincide con `SELECT id FROM public.daycares WHERE name='Guardería Sala Soles'`.
-- [ ] Re-aplicar el seed (`INSERT ... WHERE NOT EXISTS`) no duplica filas en `auth.users` ni en `public.users` (count estable en 1).
-- [ ] `npx supabase db advisors` no reporta hallazgos `security` para `users` (RLS habilitado).
-- [ ] `npm run build` y `npm run lint` pasan sin errores.
+- [x] `supabase/migrations/*_create_users.sql` existe y contiene `CREATE TYPE public.user_role` con `staff,parent,admin` y `CREATE TYPE public.user_status` con `pending,active`. — verificado: `20260907234027_create_users.sql` contiene `create type public.user_role as enum ('staff','parent','admin')` y `create type public.user_status as enum ('pending','active')`
+- [x] `supabase/migrations/*_create_users.sql` contiene `CREATE TABLE public.users` con `id uuid PK FK → auth.users ON DELETE CASCADE`, `daycare_id uuid NOT NULL FK → daycares ON DELETE RESTRICT`, `role user_role NOT NULL`, `status user_status NOT NULL DEFAULT 'active'`, `full_name text NOT NULL CHECK (char_length>0)`, `avatar_url text`, `notify_on_post boolean NOT NULL DEFAULT true`, `daily_summary_enabled boolean NOT NULL DEFAULT true`, `created_at/updated_at timestamptz NOT NULL DEFAULT now()` e índice `users_daycare_id_idx`. — verificado: migración contiene PK/FKs con ON DELETE CASCADE/RESTRICT, CHECK, defaults y `CREATE INDEX users_daycare_id_idx`; `information_schema.columns` 10 cols y `pg_indexes`/`pg_constraint` OK
+- [x] `SELECT relrowsecurity FROM pg_class WHERE relname='users'` es `true`. — verificado: `SELECT ... FROM pg_class JOIN pg_namespace WHERE nspname='public' AND relname='users'` → `relrowsecurity=true`
+- [x] `SELECT count(*) FROM pg_policies WHERE tablename='users'` es 4 y contiene `users_select_authenticated` (SELECT), `users_insert_authenticated` (INSERT), `users_update_authenticated` (UPDATE), `users_delete_authenticated` (DELETE), todas `TO authenticated`. — verificado: `count=4`, roles `{authenticated}` en las 4 políticas
+- [x] `SELECT tgname FROM pg_trigger WHERE tgname='handle_users_updated_at'` existe y `SELECT tgname FROM pg_trigger WHERE tgname='on_auth_user_created'` existe con `tgrelid = 'auth.users'::regclass`. — verificado: `handle_users_updated_at` en `public.users`, `on_auth_user_created` en `auth.users`
+- [x] `SELECT email, raw_user_meta_data FROM auth.users WHERE email='yair@mail.com'` retorna 1 fila con `raw_user_meta_data` conteniendo `daycare_id`, `role=staff`, `full_name='Caro Giménez'` y `email_confirmed_at NOT NULL`. — verificado: 1 fila, `raw_user_meta_data={"daycare_id":"7e3edabe-7594-4fb3-8521-1155d4d7fad8","role":"staff","full_name":"Caro Giménez"}`, `email_confirmed_at=2026-09-07 23:40:53+00`
+- [x] `SELECT full_name, role, status FROM public.users WHERE id = (SELECT id FROM auth.users WHERE email='yair@mail.com')` retorna `Caro Giménez, staff, active` y `daycare_id` coincide con `SELECT id FROM public.daycares WHERE name='Guardería Sala Soles'`. — verificado: `Caro Giménez, staff, active, 7e3edabe-7594-4fb3-8521-1155d4d7fad8` coincide con `daycares` Sala Soles
+- [x] Re-aplicar el seed (`INSERT ... WHERE NOT EXISTS`) no duplica filas en `auth.users` ni en `public.users` (count estable en 1). — verificado: re-ejecución `INSERT ... WHERE NOT EXISTS` → `count auth.users=1`, `count public.users=1`
+- [x] `npx supabase db advisors` no reporta hallazgos `security` para `users` (RLS habilitado). — verificado: `get_advisors security` sin hallazgos `rls_disabled`/`policy_exists` para `users`; WARNs presentes son `handle_updated_at search_path mutable` y `handle_new_user SECURITY DEFINER executable` (esperados por spec) y `auth_leaked_password_protection` global — ningún hallazgo RLS
+- [x] `npm run build` y `npm run lint` pasan sin errores. — verificado: `npm run build` exit 0 (Compiled successfully, 15 pages), `npm run lint` exit 0 (1 warning pre-existente `no-img-element` en compose-post-modal)
 
 ## Decisions
 
