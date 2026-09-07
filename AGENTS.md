@@ -38,7 +38,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 - Schema de referencia: `../07-DB-Schema` (definido en `opencode.json` → `references.docs`). No es código implementado, solo referencia de tablas/columnas.
 - CLI: `npx supabase --help` para descubrir comandos (estructura cambia entre versiones). `supabase --version` actual: `2.117.0`.
-- Flujo de cambios de schema: `supabase migration new <name>` (imperativo) o `supabase/schemas/` (declarativo) — ver `.agents/skills/supabase/SKILL.md`. No usar `apply_migration` para iterar en local; usar `execute_sql`/`supabase db query` y generar migración con `supabase db pull`.
+- **Migraciones obligatorias — toda manipulación de BD debe ir versionada:** nunca ejecutes DDL/DML directo sin migración. Todo cambio (tablas, columnas, índices, RLS, políticas, seeds, funciones) va en `supabase/migrations/<timestamp>_<name>.sql`.
+- Flujo imperativo (usado en este repo): `npx supabase migration new <name>` → iterar SQL vía `execute_sql` (MCP) o `npx supabase db query` (sin `apply_migration` — evita historial prematuro) → verificar `pg_class`/`pg_policies` → `get_advisors` → consolidar migración con `npx supabase db pull --local --yes` (requiere Docker + `npx supabase start`) y verificar `npx supabase migration list --local`. Si Docker no está disponible, escribir el archivo manualmente con el mismo contenido y documentar el prerequisito — ver `specs/07-daycares-table.md` y `.agents/skills/supabase/SKILL.md` §Making Schema Changes. Declarativo (`supabase/schemas/`) no aplica en este repo.
 - Seguridad: RLS obligatorio en `public`, `security_invoker=true` en vistas, `TO authenticated` + `USING`/`WITH CHECK`, nunca `SECURITY DEFINER` para arreglar permisos — ver checklist en skill `supabase`.
 
 ## Skills instaladas
