@@ -17,7 +17,7 @@ Current branch:
 !`git branch --show-current`
 
 Specs available in this folder:
-!`ls specs/ 2>/dev/null || echo "The specs/ folder does not exist"`
+!`ls specs/ specs/database/ 2>/dev/null || echo "The specs/ folder does not exist"`
 
 Branch-creation config:
 !`cat specs/.spec-config.yml 2>/dev/null || echo "AutoCreateBranch: true (default, no config file)"`
@@ -42,7 +42,7 @@ If `$ARGUMENTS` is empty:
 
 If `$ARGUMENTS` has a value:
 
-- Look for the file in `specs/`. The user may have written the full name (`01-mvp-arkanoid`), only the number (`01`), or only the slug (`mvp-arkanoid`). Try to find the correct file in any of those cases.
+- Look for the file in `specs/` and `specs/database/`. The user may have written the full name (`01-mvp-arkanoid`), only the number (`01`), or only the slug (`mvp-arkanoid`). Try to find the correct file in any of those cases.
 - If you do not find the file, show the available specs and ask the user to correct the name.
 - If you do find it, continue to Phase 2.
 
@@ -145,7 +145,7 @@ Once you have confirmed the state means `Approved`:
    ```
    ✅ Ready to implement.
 
-   Spec:   specs/NN-slug.md
+   Spec:   specs/NN-slug.md (or specs/database/NN-slug.md for database specs)
    Branch: spec-NN-slug  (active)   (← or the current branch, if no new branch was created)
    State:  Approved   (← echo back the actual value found in the spec)
    ```

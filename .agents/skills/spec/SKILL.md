@@ -14,11 +14,11 @@ Today's date (use this for the spec header, never guess it):
 !`date +%F`
 
 Specs that already exist:
-!`ls specs/ 2>/dev/null || echo "The specs/ folder does not exist yet"`
+!`ls specs/ specs/database/ 2>/dev/null || echo "The specs/ folder does not exist yet"`
 
 ---
 
-This skill helps you produce a useful spec following the spec-driven method. **You don't write code here.** Your job is to help the user clarify what they want to build, ask questions when something is not well-defined enough, and develop the spec section by section until it is ready to be saved into `specs/`.
+This skill helps you produce a useful spec following the spec-driven method. **You don't write code here.** Your job is to help the user clarify what they want to build, ask questions when something is not well-defined enough, and develop the spec section by section until it is ready to be saved into `specs/` (`specs/database/` for database specs).
 
 ## Philosophy
 
@@ -110,12 +110,12 @@ In both cases the content follows the same order:
 
 When the content is ready (either because you had everything, or because all sections were confirmed):
 
-1. Determine the next sequential number from the `specs/` listing in the session context. Take the highest existing number and add one, zero-padded to two digits. If the last one is `02-powerups.md`, this one will be `03-`. If `specs/` is empty or missing, start at `01-`.
+1. Determine the next sequential number from the `specs/` + `specs/database/` listing in the session context. Take the highest existing number and add one, zero-padded to two digits. If the last one is `02-powerups.md`, this one will be `03-`. If `specs/` is empty or missing, start at `01-`.
 2. Generate a short kebab-case slug from the objective (e.g. `levels-and-highscores`). See **Arguments** below for when `$ARGUMENTS` is the slug instead.
 3. Use the date from the session context above for the `**Date:**` field. **Never write a date you did not read from there.**
-4. Write the file directly at `specs/NN-slug.md` with all the sections. **Do not ask for permission to write it and do not ask whether the file name works** — announce the path in the final confirmation. Only ask if the target file already exists.
+4. Write the file at `specs/database/NN-slug.md` if the spec is about the database (tables, enums, RLS, migrations, seeds, SQL functions); otherwise at `specs/NN-slug.md`. **Do not ask for permission to write it and do not ask whether the file name works** — announce the path in the final confirmation. Only ask if the target file already exists.
 5. Mark the state as `Draft` by default (or the equivalent word used by the existing specs in this repo). **Do not mark it as `Approved` automatically** — the user does that once they have re-read it.
-6. If the header lists dependencies (`**Depends on:** SPEC 01`), check that each referenced spec actually exists in `specs/`. If one does not, say so instead of writing a dangling reference.
+6. If the header lists dependencies (`**Depends on:** SPEC 01`), check that each referenced spec actually exists in `specs/` or `specs/database/`. If one does not, say so instead of writing a dangling reference.
 7. **Seed the config file if it does not exist.** Check for `specs/.spec-config.yml`. If it is **missing**, create it with the default content below. If it **already exists, leave it untouched** — never overwrite the user's settings.
 
    ```yaml
