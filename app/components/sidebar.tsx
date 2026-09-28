@@ -1,5 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import ComposePostModal from "@/app/components/compose-post-modal";
+import { createClient } from "@/utils/supabase/server";
 
 export type SidebarSection = "feed" | "kids";
 
@@ -49,7 +52,39 @@ const navItems = [
   },
 ];
 
-export default function Sidebar({ active }: { active: SidebarSection }) {
+export default async function Sidebar({ active }: { active: SidebarSection }) {
+  async function signOut() {
+    "use server";
+
+    const supabase = createClient(await cookies());
+    await supabase.auth.signOut();
+    redirect("/auth/login");
+  }
+
+  const supabase = createClient(await cookies());
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId =
+    typeof claimsData?.claims.sub === "string" ? claimsData.claims.sub : null;
+  const fallbackName =
+    typeof claimsData?.claims.email === "string" ? claimsData.claims.email : "Usuario";
+
+  let displayName = fallbackName;
+  let displayDetail: string | null = null;
+  if (userId) {
+    const { data: profile } = await supabase
+      .from("users")
+      .select("full_name, daycares ( name )")
+      .eq("id", userId)
+      .single();
+    if (profile) {
+      displayName = profile.full_name;
+      const daycares = profile.daycares as { name: string } | { name: string }[] | null;
+      const daycareName = Array.isArray(daycares) ? daycares[0]?.name : daycares?.name;
+      if (daycareName) displayDetail = daycareName;
+    }
+  }
+  const avatarInitial = (displayName.charAt(0) || "?").toUpperCase();
+
   return (
     <aside className="sticky top-0 hidden h-screen w-[248px] flex-none flex-col border-r border-[#ECE0D0] bg-[#FFFDF9] p-4 px-4 py-6 lg:flex">
       <a href="#" className="flex items-center gap-[11px] pb-[22px] pl-2 pr-2 pt-1">
@@ -86,16 +121,20 @@ export default function Sidebar({ active }: { active: SidebarSection }) {
 
       <div className="mt-[10px] border-t border-[#ECE0D0] pt-[14px]">
         <div className="flex items-center gap-[11px] px-2 py-1.5">
-          <div className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-[#F2937A] font-display text-[16px] font-semibold text-white">C</div>
+          <div className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-[#F2937A] font-display text-[16px] font-semibold text-white">{avatarInitial}</div>
           <div className="min-w-0 flex-1">
-            <div className="text-[14px] font-extrabold text-[#3F362E]">Caro Giménez</div>
-            <div className="text-[12px] text-[#A89A8B]">Maestra · Soles</div>
+            <div className="truncate text-[14px] font-extrabold text-[#3F362E]">{displayName}</div>
+            {displayDetail && (
+              <div className="truncate text-[12px] text-[#A89A8B]">{displayDetail}</div>
+            )}
           </div>
-          <a href="#" title="Cerrar sesión" className="flex h-8 w-8 flex-none items-center justify-center rounded-[10px] bg-[#F6ECDF] text-[#94887B]">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
-            </svg>
-          </a>
+          <form action={signOut} className="flex-none">
+            <button type="submit" title="Cerrar sesión" className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-[10px] bg-[#F6ECDF] text-[#94887B]">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
+              </svg>
+            </button>
+          </form>
         </div>
       </div>
     </aside>

@@ -1,6 +1,15 @@
+"use client";
+
+import { useActionState } from "react";
 import Link from "next/link";
 
+import { signIn } from "./actions";
+
+const initialState = { error: undefined as string | undefined };
+
 export default function LoginPage() {
+  const [state, formAction, isPending] = useActionState(signIn, initialState);
+
   return (
     <div className="grid min-h-screen grid-cols-[1.05fr_1fr] bg-[#FBF4EC]">
       <div className="relative flex flex-col justify-between overflow-hidden bg-[linear-gradient(155deg,#F6A98E_0%,#F2937A_45%,#EC7E62_100%)] px-[60px] py-[56px] text-white">
@@ -36,32 +45,49 @@ export default function LoginPage() {
           <h2 className="m-0 mb-[6px] font-display text-[30px] font-semibold text-[#3F362E]">Iniciar sesión</h2>
           <p className="m-0 mb-[28px] text-[15px] text-[#94887B]">Ingresá para ver el día de hoy.</p>
 
-          <label className="mb-[8px] block text-[12px] font-bold tracking-[.7px] text-[#94887B]">EMAIL</label>
-          <input
-            type="email"
-            defaultValue="caro@opendaycare.com"
-            className="mb-[18px] w-full rounded-[14px] border-[1.5px] border-[#EADFD0] bg-white px-[16px] py-[14px] text-[15px] text-[#3F362E] focus:outline-none"
-          />
+          <form action={formAction}>
+            <label htmlFor="email" className="mb-[8px] block text-[12px] font-bold tracking-[.7px] text-[#94887B]">EMAIL</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              placeholder="tu@email.com"
+              className="mb-[18px] w-full rounded-[14px] border-[1.5px] border-[#EADFD0] bg-white px-[16px] py-[14px] text-[15px] text-[#3F362E] placeholder-[#B6A99B] focus:outline-none"
+            />
 
-          <label className="mb-[8px] block text-[12px] font-bold tracking-[.7px] text-[#94887B]">CONTRASEÑA</label>
-          <input
-            type="password"
-            placeholder="••••••••"
-            className="mb-[10px] w-full rounded-[14px] border-[1.5px] border-[#EADFD0] bg-white px-[16px] py-[14px] text-[15px] text-[#3F362E] placeholder-[#B6A99B] focus:outline-none"
-          />
+            <label htmlFor="password" className="mb-[8px] block text-[12px] font-bold tracking-[.7px] text-[#94887B]">CONTRASEÑA</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              autoComplete="current-password"
+              placeholder="••••••••"
+              className="mb-[10px] w-full rounded-[14px] border-[1.5px] border-[#EADFD0] bg-white px-[16px] py-[14px] text-[15px] text-[#3F362E] placeholder-[#B6A99B] focus:outline-none"
+            />
 
-          <div className="mb-[20px] text-right">
-            <a href="#" className="text-[13.5px] font-bold text-[#C5503A]">
-              ¿Olvidaste tu contraseña?
-            </a>
-          </div>
+            <div className="mb-[20px] text-right">
+              <a href="#" className="text-[13.5px] font-bold text-[#C5503A]">
+                ¿Olvidaste tu contraseña?
+              </a>
+            </div>
 
-          <Link
-            href="/"
-            className="block w-full rounded-[15px] bg-[linear-gradient(180deg,#F4977E,#EE8164)] px-[16px] py-[15px] text-center text-[16px] font-extrabold text-white shadow-[0_10px_22px_-8px_rgba(238,129,100,.7)]"
-          >
-            Iniciar sesión
-          </Link>
+            {state?.error && (
+              <p role="alert" className="m-0 mb-[16px] rounded-[12px] bg-[#FBE9E4] px-[14px] py-[12px] text-[14px] font-bold text-[#C5503A]">
+                {state.error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={isPending}
+              className="block w-full rounded-[15px] bg-[linear-gradient(180deg,#F4977E,#EE8164)] px-[16px] py-[15px] text-center text-[16px] font-extrabold text-white shadow-[0_10px_22px_-8px_rgba(238,129,100,.7)] disabled:opacity-60"
+            >
+              Iniciar sesión
+            </button>
+          </form>
 
           <p className="m-0 mt-[24px] text-center text-[14.5px] text-[#94887B]">
             ¿Te invitó la guardería?{" "}
