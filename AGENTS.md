@@ -17,7 +17,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## Stack
 
 - Next.js 16 (App Router) + React 19 + TypeScript + Tailwind v4 (`@tailwindcss/postcss`)
-- Supabase (Postgres + Auth + Storage + Realtime) — schema de referencia en `../07-DB-Schema` (ver `opencode.json` → `references.docs`). Cliente aún no instalado (`supabase-js` / `@supabase/ssr` pendiente). CLI via `npx supabase` (v2.117.0)
+- Supabase (Postgres + Auth + Storage + Realtime) — schema de referencia en `../07-DB-Schema` (ver `opencode.json` → `references.docs`). Cliente instalado: `@supabase/supabase-js@^2.109.0` + `@supabase/ssr@^0.12.7`. Helpers en `utils/supabase/` (`client.ts` browser, `server.ts` server, `middleware.ts` → `updateSession`) + `proxy.ts` en raíz (Next 16 usa `proxy`, no `middleware`). Env: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (en `.env.local`, gitignored). CLI via `npx supabase` (v2.117.0)
 - Scripts: `npm run dev` | `npm run build` | `npm run lint` (eslint). No hay test framework ni script de typecheck; `next build` valida los tipos.
 
 ## Estado del proyecto
