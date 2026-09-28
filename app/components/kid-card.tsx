@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { Kid, KidBadge } from "@/app/data/kids";
+import type { ChildDisplay, Kid, KidBadge } from "@/app/data/kids";
 
 const badgeStyles: Record<KidBadge, { label: string; bg: string; text: string }> = {
   peanut: { label: "MANÍ", bg: "#FBD8CC", text: "#D9684A" },
@@ -13,7 +13,7 @@ function parentText(count: number) {
   return `${count} padres vinculados`;
 }
 
-export default function KidCard({ kid }: { kid: Kid }) {
+export default function KidCard({ kid }: { kid: Kid | ChildDisplay }) {
   return (
     <Link
       href={`/kids/${kid.slug}`}
