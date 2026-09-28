@@ -53,6 +53,13 @@ export function generateMetadata({ params }: { params: Promise<{ slug: string }>
 
 const parentPalette = ["#C9B6E8", "#A9C7E8", "#F4B8CC", "#B9DEC4", "#A9D9E8", "#F4DC8E"];
 
+// Etiquetas UI del enum public.relationship_type.
+const relationshipLabels: Record<string, string> = {
+  mother: "Mamá",
+  father: "Papá",
+  guardian: "Tutor/a",
+};
+
 const parentStatus = {
   active: { label: "ACTIVA", bg: "#CFEBD8", color: "#3E9B6C" },
   pending: { label: "PENDIENTE", bg: "#F7E7A6", color: "#9A7B1E" },
@@ -92,6 +99,38 @@ async function loadProfile(slug: string): Promise<ProfileView | null> {
       birth_date: row.birth_date,
       allergy_tags: tags,
     });
+    // Vínculos reales: padres activos + invitaciones pendientes vigentes.
+    const [{ data: links }, { data: pending }] = await Promise.all([
+      supabase
+        .from("parent_children")
+        .select("relationship, parent:users!parent_children_parent_id_fkey(full_name)")
+        .eq("child_id", slug),
+      supabase
+        .from("invitations")
+        .select("full_name, relationship")
+        .eq("child_id", slug)
+        .eq("status", "pending")
+        .gt("expires_at", new Date().toISOString()),
+    ]);
+    const activeParents = ((links ?? []) as {
+      relationship: string;
+      parent: { full_name: string } | { full_name: string }[] | null;
+    }[]).map((link) => {
+      const parent = Array.isArray(link.parent) ? link.parent[0] : link.parent;
+      return {
+        name: parent?.full_name ?? "Padre/madre",
+        role: relationshipLabels[link.relationship] ?? link.relationship,
+        status: "active" as const,
+      };
+    });
+    const pendingParents = ((pending ?? []) as {
+      full_name: string;
+      relationship: string;
+    }[]).map((invitation) => ({
+      name: invitation.full_name,
+      role: relationshipLabels[invitation.relationship] ?? invitation.relationship,
+      status: "pending" as const,
+    }));
     return {
       ...display,
       room: roomName ?? "Sin sala",
@@ -104,7 +143,7 @@ async function loadProfile(slug: string): Promise<ProfileView | null> {
         ]
           .filter(Boolean)
           .join("\n") || undefined,
-      linkedParents: [],
+      linkedParents: [...activeParents, ...pendingParents],
     };
   }
   const kid = kids.find((k) => k.slug === slug);
@@ -240,7 +279,7 @@ export default async function KidProfilePage({ params }: { params: Promise<{ slu
                         </span>
                       </div>
                     ))}
-                    <LinkParentModal kidName={`${view.firstName} ${view.lastName}`} />
+                    <LinkParentModal kidName={`${view.firstName} ${view.lastName}`} childId={UUID_PATTERN.test(slug) ? slug : null} />
                   </div>
                 </div>
               </div>
