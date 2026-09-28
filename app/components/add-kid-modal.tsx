@@ -1,9 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { kids } from "@/app/data/kids";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 
-const rooms = [...new Set(kids.map((kid) => kid.room))];
+interface RoomOption {
+  id: string;
+  name: string;
+}
 
 const inputClasses =
   "w-full rounded-[14px] border-[1.5px] border-[#EADFD0] bg-white px-4 py-[13px] text-[15px] text-[#3F362E] placeholder:text-[#B6A99B]";
@@ -36,10 +40,58 @@ function formatDateInput(value: string) {
   return digits;
 }
 
-export default function AddKidModal() {
+export default function AddKidModal({ rooms }: { rooms: RoomOption[] }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [nameError, setNameError] = useState(false);
   const [birthDate, setBirthDate] = useState("");
   const [dateError, setDateError] = useState(false);
+  const [roomId, setRoomId] = useState(
+    () => rooms.find((room) => room.name === "Soles")?.id ?? rooms[0]?.id ?? "",
+  );
+  const [allergies, setAllergies] = useState("");
+  const [medicalNotes, setMedicalNotes] = useState("");
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  async function handleSave() {
+    const validName = fullName.trim().length > 0;
+    const dateMatch = birthDate.match(DATE_FORMAT);
+    const validDate = isValidDate(birthDate);
+    setNameError(!validName);
+    setDateError(!validDate);
+    if (!validName || !validDate || !dateMatch) {
+      return;
+    }
+    setIsSaving(true);
+    setSaveError(null);
+    const allergyTags = allergies
+      .split(",")
+      .map((tag) => tag.trim().toLowerCase())
+      .filter((tag) => tag.length > 0);
+    const supabase = createClient();
+    const { error } = await supabase.from("children").insert({
+      full_name: fullName.trim(),
+      birth_date: `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`,
+      room_id: roomId || null,
+      allergy_tags: allergyTags,
+      medical_notes: medicalNotes.trim() || null,
+    });
+    setIsSaving(false);
+    if (error) {
+      setSaveError("No se pudo guardar. Intentá de nuevo.");
+      return;
+    }
+    setFullName("");
+    setBirthDate("");
+    setAllergies("");
+    setMedicalNotes("");
+    setNameError(false);
+    setDateError(false);
+    setOpen(false);
+    router.refresh();
+  }
 
   return (
     <>
@@ -68,14 +120,31 @@ export default function AddKidModal() {
                 Cancelar
               </button>
               <span className="font-display text-[18px] font-semibold text-[#3F362E]">Agregar niño</span>
-              <a href="#" className="text-[15px] font-extrabold text-[#D9583C]">
-                Guardar
-              </a>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={isSaving}
+                className="cursor-pointer text-[15px] font-extrabold text-[#D9583C] disabled:opacity-50"
+              >
+                {isSaving ? "Guardando…" : "Guardar"}
+              </button>
             </div>
 
             <div className="px-[26px] py-6">
               <div className={labelClasses}>NOMBRE COMPLETO</div>
-              <input placeholder="Ej. Martina López" className={`${inputClasses} mb-[18px]`} />
+              <input
+                placeholder="Ej. Martina López"
+                value={fullName}
+                onChange={(event) => {
+                  setFullName(event.target.value);
+                  setNameError(false);
+                }}
+                aria-invalid={nameError}
+                className={`${inputClasses} mb-[18px] ${nameError ? "!border-[#D9583C]" : ""}`}
+              />
+              {nameError && (
+                <p className="-mt-[10px] mb-[18px] text-[12px] font-bold text-[#D9583C]">Ingresá el nombre del niño</p>
+              )}
 
               <div className="mb-[18px] flex items-start gap-[14px]">
                 <div className="flex-1">
@@ -99,12 +168,13 @@ export default function AddKidModal() {
                   <div className={labelClasses}>SALA</div>
                   <div className="relative">
                     <select
-                      defaultValue="Soles"
+                      value={roomId}
+                      onChange={(event) => setRoomId(event.target.value)}
                       className="w-full cursor-pointer appearance-none rounded-[14px] border-[1.5px] border-[#EADFD0] bg-white px-4 py-[13px] text-[15px] font-bold text-[#3F362E]"
                     >
                       {rooms.map((room) => (
-                        <option key={room} value={room}>
-                          {room}
+                        <option key={room.id} value={room.id}>
+                          {room.name}
                         </option>
                       ))}
                     </select>
@@ -126,10 +196,24 @@ export default function AddKidModal() {
               </div>
 
               <div className={labelClasses}>ALERGIAS (ETIQUETAS)</div>
-              <input placeholder="Ej. Maní, Lactosa" className={`${inputClasses} mb-[18px]`} />
+              <input
+                placeholder="Ej. Maní, Lactosa"
+                value={allergies}
+                onChange={(event) => setAllergies(event.target.value)}
+                className={`${inputClasses} mb-[18px]`}
+              />
 
               <div className={labelClasses}>NOTAS MÉDICAS</div>
-              <textarea placeholder="Indicaciones, medicación, contactos…" className={`${inputClasses} min-h-[90px] resize-y leading-[1.5]`} />
+              <textarea
+                placeholder="Indicaciones, medicación, contactos…"
+                value={medicalNotes}
+                onChange={(event) => setMedicalNotes(event.target.value)}
+                className={`${inputClasses} min-h-[90px] resize-y leading-[1.5]`}
+              />
+
+              {saveError && (
+                <p className="mt-4 text-[13px] font-bold text-[#D9583C]">{saveError}</p>
+              )}
             </div>
           </div>
         </div>

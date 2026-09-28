@@ -1,16 +1,51 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import LinkParentModal from "@/app/components/link-parent-modal";
 import Sidebar from "@/app/components/sidebar";
-import { kids, type LinkedParent } from "@/app/data/kids";
+import { createClient } from "@/utils/supabase/server";
+import {
+  kids,
+  formatBirthDateLabel,
+  formatEnrolledLabel,
+  toDisplay,
+  type LinkedParent,
+} from "@/app/data/kids";
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+interface ProfileView {
+  firstName: string;
+  lastName: string;
+  age: number;
+  initial: string;
+  avatarBg: string;
+  avatarColor: string;
+  room: string;
+  birthDateLabel?: string;
+  enrolledLabel?: string;
+  allergyNote?: string;
+  linkedParents?: LinkedParent[];
+}
 
 export function generateStaticParams() {
   return kids.map((kid) => ({ slug: kid.slug }));
 }
 
 export function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  return params.then(({ slug }) => {
+  return params.then(async ({ slug }) => {
+    if (UUID_PATTERN.test(slug)) {
+      const supabase = createClient(await cookies());
+      const { data } = await supabase
+        .from("children")
+        .select("full_name")
+        .eq("id", slug)
+        .single();
+      const fullName = (data as { full_name?: string } | null)?.full_name;
+      return { title: fullName ? `${fullName} · OpenDayCare` : "Niño · OpenDayCare" };
+    }
     const kid = kids.find((k) => k.slug === slug);
     return { title: kid ? `${kid.firstName} ${kid.lastName} · OpenDayCare` : "Niño · OpenDayCare" };
   });
@@ -27,10 +62,74 @@ function parentSubtitle(parent: LinkedParent) {
   return parent.status === "active" ? `${parent.role} · activa` : `${parent.role} · invitación enviada`;
 }
 
+async function loadProfile(slug: string): Promise<ProfileView | null> {
+  if (UUID_PATTERN.test(slug)) {
+    const supabase = createClient(await cookies());
+    const { data } = await supabase
+      .from("children")
+      .select("id, room_id, full_name, birth_date, enrolled_at, medical_notes, allergy_tags, rooms ( name )")
+      .eq("id", slug)
+      .single();
+    if (!data) {
+      return null;
+    }
+    const row = data as {
+      id: string;
+      room_id: string | null;
+      full_name: string;
+      birth_date: string;
+      enrolled_at: string | null;
+      medical_notes: string | null;
+      allergy_tags: string[] | null;
+      rooms: { name: string } | { name: string }[] | null;
+    };
+    const tags = row.allergy_tags ?? [];
+    const roomName = Array.isArray(row.rooms) ? row.rooms[0]?.name : row.rooms?.name;
+    const display = toDisplay({
+      id: row.id,
+      room_id: row.room_id,
+      full_name: row.full_name,
+      birth_date: row.birth_date,
+      allergy_tags: tags,
+    });
+    return {
+      ...display,
+      room: roomName ?? "Sin sala",
+      birthDateLabel: formatBirthDateLabel(row.birth_date),
+      enrolledLabel: row.enrolled_at ? formatEnrolledLabel(row.enrolled_at) : undefined,
+      allergyNote:
+        [
+          row.medical_notes?.trim(),
+          tags.length > 0 ? `Etiquetas: ${tags.join(", ").toUpperCase()}` : undefined,
+        ]
+          .filter(Boolean)
+          .join("\n") || undefined,
+      linkedParents: [],
+    };
+  }
+  const kid = kids.find((k) => k.slug === slug);
+  if (!kid) {
+    return null;
+  }
+  return {
+    firstName: kid.firstName,
+    lastName: kid.lastName,
+    age: kid.age,
+    initial: kid.initial,
+    avatarBg: kid.avatarBg,
+    avatarColor: kid.avatarColor,
+    room: kid.room,
+    birthDateLabel: kid.birthDate,
+    enrolledLabel: kid.joinedAt,
+    allergyNote: kid.allergyNote,
+    linkedParents: kid.linkedParents ?? [],
+  };
+}
+
 export default async function KidProfilePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const kid = kids.find((k) => k.slug === slug);
-  if (!kid) notFound();
+  const view = await loadProfile(slug);
+  if (!view) notFound();
 
   return (
     <div className="flex min-h-screen bg-[#F6ECDF]">
@@ -50,16 +149,16 @@ export default async function KidProfilePage({ params }: { params: Promise<{ slu
               <div className="flex items-center gap-[18px]">
                 <div
                   className="flex h-[84px] w-[84px] flex-none items-center justify-center rounded-full font-display text-[34px] font-semibold"
-                  style={{ background: kid.avatarBg, color: kid.avatarColor }}
+                  style={{ background: view.avatarBg, color: view.avatarColor }}
                 >
-                  {kid.initial}
+                  {view.initial}
                 </div>
                 <div className="flex-1">
                   <h1 className="m-0 font-display text-[28px] font-semibold text-[#3F362E]">
-                    {kid.firstName} {kid.lastName}
+                    {view.firstName} {view.lastName}
                   </h1>
                   <p className="m-0 mt-[3px] text-[15px] text-[#94887B]">
-                    {kid.age} años · Sala {kid.room}
+                    {view.age} años · Sala {view.room}
                   </p>
                 </div>
                 <a
@@ -70,7 +169,7 @@ export default async function KidProfilePage({ params }: { params: Promise<{ slu
                 </a>
               </div>
 
-              {kid.allergyNote && (
+              {view.allergyNote && (
                 <div className="flex gap-[14px] rounded-[16px] bg-[#FBDAD6] p-[16px_18px]">
                   <div className="flex h-10 w-10 flex-none items-center justify-center rounded-[11px] bg-[#F4A8A0]">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -80,30 +179,30 @@ export default async function KidProfilePage({ params }: { params: Promise<{ slu
                   </div>
                   <div>
                     <div className="mb-0.5 text-[15px] font-extrabold text-[#C5413A]">Alergias y notas</div>
-                    <div className="text-[14.5px] leading-normal text-[#B25249]">{kid.allergyNote}</div>
+                    <div className="whitespace-pre-line text-[14.5px] leading-normal text-[#B25249]">{view.allergyNote}</div>
                   </div>
                 </div>
               )}
 
-              {kid.birthDate && (
+              {view.birthDateLabel && (
                 <div className="overflow-hidden rounded-[16px] border border-[#ECE0D0] bg-[#FFFDF9]">
                   <div className="flex justify-between border-b border-[#F0E6D8] px-[18px] py-[15px]">
                     <span className="text-[14.5px] text-[#94887B]">Fecha de nacimiento</span>
-                    <span className="text-[14.5px] font-extrabold text-[#3F362E]">{kid.birthDate}</span>
+                    <span className="text-[14.5px] font-extrabold text-[#3F362E]">{view.birthDateLabel}</span>
                   </div>
                   <div className="flex justify-between border-b border-[#F0E6D8] px-[18px] py-[15px]">
                     <span className="text-[14.5px] text-[#94887B]">Sala</span>
-                    <span className="text-[14.5px] font-extrabold text-[#3F362E]">{kid.room}</span>
+                    <span className="text-[14.5px] font-extrabold text-[#3F362E]">{view.room}</span>
                   </div>
                   <div className="flex justify-between px-[18px] py-[15px]">
                     <span className="text-[14.5px] text-[#94887B]">Ingreso</span>
-                    <span className="text-[14.5px] font-extrabold text-[#3F362E]">{kid.joinedAt}</span>
+                    <span className="text-[14.5px] font-extrabold text-[#3F362E]">{view.enrolledLabel}</span>
                   </div>
                 </div>
               )}
             </div>
 
-            {kid.linkedParents && (
+            {view.linkedParents && (
               <div className="flex w-[300px] flex-none flex-col gap-[14px]">
                 <a
                   href="#"
@@ -121,7 +220,7 @@ export default async function KidProfilePage({ params }: { params: Promise<{ slu
                     PADRES VINCULADOS
                   </div>
                   <div className="flex flex-col gap-[14px]">
-                    {kid.linkedParents.map((parent, i) => (
+                    {view.linkedParents.map((parent, i) => (
                       <div key={parent.name} className="flex items-center gap-3">
                         <div
                           className="flex h-10 w-10 flex-none items-center justify-center rounded-full font-display text-[16px] font-semibold text-white"
@@ -141,7 +240,7 @@ export default async function KidProfilePage({ params }: { params: Promise<{ slu
                         </span>
                       </div>
                     ))}
-                    <LinkParentModal kidName={`${kid.firstName} ${kid.lastName}`} />
+                    <LinkParentModal kidName={`${view.firstName} ${view.lastName}`} />
                   </div>
                 </div>
               </div>

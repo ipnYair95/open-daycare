@@ -1,9 +1,9 @@
 # SPEC 10 — Salas y niños: tablas `rooms`/`children` con seed y crear niño desde `/kids`
 
-> **Estado:** Approved
+> **Estado:** Implemented
 > **Depende de:** SPEC 02, SPEC 04, SPEC 07, SPEC 08
 > **Fecha:** 2026-09-28
-> **Objetivo:** Crear las tablas `rooms` y `children` con RLS y 3 salas seed, y conectar `/kids` a Supabase para listar y crear niños reales.
+> **Objetivo:** Crear las tablas `rooms` y `children` con RLS y 3 salas seed, conectar `/kids` a Supabase para listar y crear niños reales, y mostrar el perfil `/kids/[slug]` desde BD.
 
 ## Scope
 
@@ -19,13 +19,14 @@
 - `/kids` lee `children` y `rooms` reales de Supabase y arranca vacío ("0 niños") hasta crear el primero.
 - Modal "Agregar niño" guarda real: `full_name` y `birth_date` obligatorios, `room` con default `Soles`, alergias como texto coma-separado que se guarda en minúsculas como `text[]`, `medical_notes` opcional, `photo_consent` default `true` sin UI.
 - Migración imperativa en `supabase/migrations/<timestamp>_create_rooms_children.sql` (flujo `migration new` + `execute_sql`/`db query` + `db pull --local`).
+- Perfil dinámico `/kids/[slug]`: lee el niño real (`children` + nombre de sala) por id (slug = uuid); si el slug no es uuid o no existe en BD, fallback al perfil estático; sin padres vinculados hasta su spec.
+- Helpers de presentación del niño (edad, avatar, fechas) compartidos en `app/data/kids.ts` para listado y perfil.
 
 **Out of scope (para futuros specs):**
 
 - Editar niño y archivar (`status = 'archived'`).
 - Búsqueda funcional del buscador.
 - Vincular padres (`parent_children`, `invitations`).
-- Perfil dinámico `/kids/[slug]` desde BD.
 - RLS con `auth.uid()` / aislamiento por `daycare_id`.
 - Resto de tablas (`posts`, `post_children`, etc.).
 
@@ -120,11 +121,13 @@ supabase/
     └── <timestamp>_create_rooms_children.sql  # + NUEVO (migración imperativa)
 app/
 ├── kids/
-│   └── page.tsx                               # ~ MODIFICAR (leer children + rooms reales)
+│   ├── page.tsx                               # ~ MODIFICAR (leer children + rooms reales)
+│   └── [slug]/
+│       └── page.tsx                           # ~ MODIFICAR (perfil dinámico desde BD con fallback estático)
 ├── components/
 │   └── add-kid-modal.tsx                      # ~ MODIFICAR (Guardar crea el niño real)
 └── data/
-    └── kids.ts                                # ~ MODIFICAR o eliminar (deja de ser la fuente)
+    └── kids.ts                                # ~ MODIFICAR (ChildDisplay + helpers compartidos; deja de ser fuente del listado)
 ```
 
 **Pasos** (cada uno deja el sistema funcional):
@@ -137,21 +140,26 @@ app/
 6. Modificar `app/kids/page.tsx`: leer `rooms` y `children` reales de Supabase; el listado arranca vacío ("0 niños"); cada sala agrupa a sus niños.
 7. Modificar `app/components/add-kid-modal.tsx`: "Guardar" inserta el niño real (`full_name` + `birth_date` obligatorios, `room` default `Soles`, alergias coma-separadas a `text[]` en minúsculas, `medical_notes` opcional); el listado refleja el niño creado sin recargar datos de mentira.
 8. Verificación final: `npm run lint` y `npm run build`; crear un niño desde el modal aparece en el listado; captura Playwright en `.playwright-mcp/kids-supabase-verification.png`.
+9. Modificar `app/kids/[slug]/page.tsx`: si el slug es uuid, leer el niño real (`children` + nombre de sala) y mostrar nombre, edad, sala, nacimiento, ingreso, notas/alergias; si no, fallback al perfil estático; mover helpers de presentación a `app/data/kids.ts` para compartir con el listado.
+10. Verificación del detalle: abrir `/kids/<uuid>` del niño creado muestra datos reales sin 404; captura Playwright en `.playwright-mcp/kid-detail-supabase-verification.png`; `npm run lint` y `npm run build`.
 
 ## Acceptance criteria
 
-- [ ] `supabase/migrations/*_create_rooms_children.sql` existe y contiene `CREATE TYPE public.child_status` con `active,archived`.
-- [ ] La migración contiene `CREATE TABLE public.rooms` con `id uuid PK default gen_random_uuid()`, `daycare_id uuid NOT NULL FK → daycares ON DELETE RESTRICT`, `name text NOT NULL CHECK (char_length(name)>0)`, `created_at timestamptz NOT NULL default now()`.
-- [ ] La migración contiene `CREATE TABLE public.children` con `room_id uuid nullable FK → rooms ON DELETE SET NULL`, `full_name NOT NULL CHECK`, `birth_date date NOT NULL`, `enrolled_at date NOT NULL default CURRENT_DATE`, `allergy_tags text[] NOT NULL default '{}'`, `photo_consent boolean NOT NULL default true`, `status child_status NOT NULL default 'active'`, `created_at/updated_at` e índice `children_room_id_idx`.
-- [ ] `SELECT relrowsecurity FROM pg_class WHERE relname IN ('rooms','children')` es `true` en ambas.
-- [ ] `SELECT count(*) FROM pg_policies WHERE tablename IN ('rooms','children')` es 8 (4 por tabla), todas `TO authenticated`.
-- [ ] `SELECT name FROM public.rooms` contiene exactamente `Soles`, `Lunas`, `Estrellas` con `daycare_id` de "Guardería Sala Soles".
-- [ ] Re-aplicar el seed no duplica salas (count estable en 3).
-- [ ] `SELECT count(*) FROM public.children` es 0 tras migrar (sin niños seed).
-- [ ] `/kids` muestra "0 niños" con la tabla vacía y sin errores en consola.
-- [ ] Crear un niño desde "Agregar niño" (nombre + fecha + sala) lo inserta en `public.children` y aparece en el listado.
-- [ ] Guardar sin nombre o sin fecha no inserta nada y muestra error en el modal.
-- [ ] `npm run build` y `npm run lint` pasan sin errores.
+- [x] `supabase/migrations/*_create_rooms_children.sql` existe y contiene `CREATE TYPE public.child_status` con `active,archived`. _(verificado: archivo `20260928191320_create_rooms_children.sql`, grep OK)_
+- [x] La migración contiene `CREATE TABLE public.rooms` con `id uuid PK default gen_random_uuid()`, `daycare_id uuid NOT NULL FK → daycares ON DELETE RESTRICT`, `name text NOT NULL CHECK (char_length(name)>0)`, `created_at timestamptz NOT NULL default now()`. _(verificado: grep OK)_
+- [x] La migración contiene `CREATE TABLE public.children` con `room_id uuid nullable FK → rooms ON DELETE SET NULL`, `full_name NOT NULL CHECK`, `birth_date date NOT NULL`, `enrolled_at date NOT NULL default CURRENT_DATE`, `allergy_tags text[] NOT NULL default '{}'`, `photo_consent boolean NOT NULL default true`, `status child_status NOT NULL default 'active'`, `created_at/updated_at` e índice `children_room_id_idx`. _(verificado: grep OK)_
+- [x] `SELECT relrowsecurity FROM pg_class WHERE relname IN ('rooms','children')` es `true` en ambas. _(verificado: `true`/`true` vía execute_sql)_
+- [x] `SELECT count(*) FROM pg_policies WHERE tablename IN ('rooms','children')` es 8 (4 por tabla), todas `TO authenticated`. _(verificado: count 8, SELECT/INSERT/UPDATE/DELETE por tabla)_
+- [x] `SELECT name FROM public.rooms` contiene exactamente `Soles`, `Lunas`, `Estrellas` con `daycare_id` de "Guardería Sala Soles". _(verificado vía execute_sql)_
+- [x] Re-aplicar el seed no duplica salas (count estable en 3). _(verificado: re-insert + count 3)_
+- [x] `SELECT count(*) FROM public.children` es 0 tras migrar (sin niños seed). _(verificado: 0 al migrar; hay 2 filas de prueba creadas por el usuario después, no seed)_
+- [x] `/kids` muestra "0 niños" con la tabla vacía y sin errores en consola. _(verificado: snapshot Playwright con 3 salas en "0 niños", consola 0 errores/0 warnings)_
+- [x] Crear un niño desde "Agregar niño" (nombre + fecha + sala) lo inserta en `public.children` y aparece en el listado. _(verificado: E2E "Martina López" → SALA SOLES "1 niños" + fila en BD con `allergy_tags` en minúsculas, `photo_consent true`, `status active`)_
+- [x] Guardar sin nombre o sin fecha no inserta nada y muestra error en el modal. _(verificado 2 veces: "Ingresá el nombre del niño" + "Fecha inválida")_
+- [x] `/kids/<uuid>` muestra el perfil real (nombre, edad, sala, nacimiento, ingreso, notas/alergias) sin 404. _(verificado: la URL reportada `.../a21a017b...` renderiza nombre/edad/sala/fechas/notas+etiquetas/panel padres; estilos `#FBDAD6`, h1 28px `#3F362E`)_
+- [x] Slugs estáticos viejos (`/kids/mateo-fernandez`) siguen funcionando (fallback). _(verificado: título y datos de Mateo intactos)_
+- [x] Captura Playwright del detalle en `.playwright-mcp/kid-detail-supabase-verification.png`. _(verificado: archivo guardado)_
+- [x] `npm run build` y `npm run lint` pasan sin errores. _(verificado: build OK con `/kids/[slug]` dinámica; lint 0 errores)_
 
 ## Decisions
 
@@ -163,7 +171,8 @@ app/
 - **Sí:** `daycare_id NOT NULL` + `ON DELETE RESTRICT` en `rooms`. Igual que `users.daycare_id` en SPEC 08.
 - **Sí:** `full_name` + `birth_date` obligatorios, `room` default `Soles` (decisión del usuario). Resto opcional según schema.
 - **Sí:** Alergias como texto coma-separado a `text[]` en minúsculas, `photo_consent` sin UI (default `true`). Opción simple confirmada por el usuario; chips y checkbox quedan para otro spec si hacen falta.
-- **No:** Editar, archivar, búsqueda funcional, vincular padres ni perfil dinámico.
+- **Sí:** Perfil dinámico incluido en este spec (pedido del usuario tras el 404): lee por id con fallback estático; padres vinculados siguen pendientes.
+- **No:** Editar, archivar, búsqueda funcional y vincular padres.
 - **No:** Políticas con `auth.uid()` en este spec. Se difiere a spec de auth.
 
 ## Risks
@@ -174,11 +183,12 @@ app/
 | `CREATE TYPE child_status` no es idempotente (`already exists`) | Migración única; no re-ejecutar sin `DROP TYPE` previo |
 | `/kids` hoy depende de `app/data/kids.ts` estático | La migración de UI es parte de este spec; el perfil `/kids/[slug]` sigue estático hasta su spec |
 | `supabase db pull` genera diff vacío si se usó `apply_migration` | Usar `execute_sql`/`db query` para iterar y `db pull` solo al final |
+| Slugs estáticos viejos (`mateo-fernandez`) no existen en BD | Fallback al perfil estático cuando el slug no es uuid o no está en BD |
 
 ## What is **not** in this spec
 
 - Editar niño y archivado lógico (`status = 'archived'`).
-- Búsqueda funcional, vincular padres y perfil dinámico.
+- Búsqueda funcional, vincular padres.
 - Políticas RLS con ownership (`auth.uid()`) y aislamiento multitenant.
 - Resto de tablas del schema (`posts`, `post_children`, etc.).
 - Storage, Realtime, Edge Functions.

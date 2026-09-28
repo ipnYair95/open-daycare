@@ -27,6 +27,81 @@ export interface KidProfile extends Kid {
   linkedParents?: LinkedParent[];
 }
 
+// Niño real de Supabase (SPEC 10). El listado /kids y el perfil usan este tipo;
+// el arreglo estático `kids` solo alimenta el fallback del perfil y compose hasta sus specs.
+export interface ChildDisplay extends Omit<Kid, "id"> {
+  id: string;
+}
+
+// Fila de public.children tal como la lee la UI.
+export interface ChildRow {
+  id: string;
+  room_id: string | null;
+  full_name: string;
+  birth_date: string;
+  allergy_tags: string[] | null;
+}
+
+const avatarPairs = [
+  { bg: "#A9D9E8", color: "#1F7A93" },
+  { bg: "#F4B8CC", color: "#C44A7A" },
+  { bg: "#B9DEC4", color: "#3E8B62" },
+  { bg: "#F4DC8E", color: "#9A7B1E" },
+  { bg: "#C9B6E8", color: "#7B5FC0" },
+];
+
+const MONTHS_SHORT = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+
+export function ageFromBirthDate(birthDate: string) {
+  const birth = new Date(birthDate);
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const hadBirthday =
+    now.getMonth() > birth.getMonth() ||
+    (now.getMonth() === birth.getMonth() && now.getDate() >= birth.getDate());
+  if (!hadBirthday) {
+    age -= 1;
+  }
+  return Math.max(age, 0);
+}
+
+// Fecha de BD (yyyy-mm-dd) a etiqueta visible ("12 mar 2022").
+export function formatBirthDateLabel(isoDate: string) {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  return `${day} ${MONTHS_SHORT[month - 1]} ${year}`;
+}
+
+// Fecha de BD (yyyy-mm-dd) a etiqueta de ingreso ("feb 2025").
+export function formatEnrolledLabel(isoDate: string) {
+  const [year, month] = isoDate.split("-").map(Number);
+  return `${MONTHS_SHORT[month - 1]} ${year}`;
+}
+
+export function toDisplay(row: ChildRow): ChildDisplay {
+  const parts = row.full_name.trim().split(/\s+/);
+  const firstName = parts[0] || row.full_name;
+  const tags = row.allergy_tags ?? [];
+  const hash = [...row.full_name].reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+  const avatar = avatarPairs[hash % avatarPairs.length];
+  const display: ChildDisplay = {
+    id: row.id,
+    slug: row.id,
+    firstName,
+    lastName: parts.slice(1).join(" "),
+    age: ageFromBirthDate(row.birth_date),
+    initial: (firstName.charAt(0) || "?").toUpperCase(),
+    avatarBg: avatar.bg,
+    avatarColor: avatar.color,
+    linkedParentsCount: 0,
+  };
+  if (tags.includes("peanut")) {
+    display.badge = "peanut";
+  } else if (tags.includes("lactose")) {
+    display.badge = "lactose";
+  }
+  return display;
+}
+
 export const kids: KidProfile[] = [
   {
     id: 1,
