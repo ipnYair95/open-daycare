@@ -2,11 +2,19 @@
 
 import { useState } from "react";
 
+import { sendInvitation } from "./invitation-actions";
+
 const inputClasses =
   "w-full rounded-[14px] border-[1.5px] border-[#EADFD0] bg-white px-4 py-[13px] text-[15px] text-[#3F362E] placeholder:text-[#B6A99B]";
 const labelClasses =
   "mb-2 text-[12px] font-extrabold tracking-[.7px] text-[#94887B]";
 const relationships = ["Mamá", "Papá", "Tutor/a"] as const;
+// Mapeo parentesco UI → enum public.relationship_type.
+const relationshipMap: Record<string, string> = {
+  "Mamá": "mother",
+  "Papá": "father",
+  "Tutor/a": "guardian",
+};
 const emailPattern = /^\S+@\S+\.\S+$/;
 
 function validateName(name: string) {
@@ -23,13 +31,52 @@ function validateEmail(email: string) {
   return null;
 }
 
-export default function LinkParentModal({ kidName }: { kidName: string }) {
+export default function LinkParentModal({
+  kidName,
+  childId,
+}: {
+  kidName: string;
+  childId: string | null;
+}) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [relationship, setRelationship] = useState<string>("Mamá");
   const [nameError, setNameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const [code, setCode] = useState<string | null>(null);
+  const [emailSent, setEmailSent] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  async function handleSend() {
+    const nextNameError = validateName(name);
+    const nextEmailError = validateEmail(email);
+    setNameError(nextNameError);
+    setEmailError(nextEmailError);
+    if (nextNameError || nextEmailError) {
+      return;
+    }
+    if (!childId) {
+      setSubmitError("Este perfil es de demostración; solo se puede invitar desde niños registrados.");
+      return;
+    }
+    setSending(true);
+    setSubmitError(null);
+    const result = await sendInvitation({
+      childId,
+      fullName: name.trim(),
+      email: email.trim(),
+      relationship: relationshipMap[relationship] ?? relationship,
+    });
+    setSending(false);
+    if (!result.ok) {
+      setSubmitError(result.error);
+      return;
+    }
+    setCode(result.code);
+    setEmailSent(result.emailSent);
+  }
 
   return (
     <>
@@ -142,20 +189,32 @@ export default function LinkParentModal({ kidName }: { kidName: string }) {
 
               <div className="mb-5 rounded-[16px] border-[1.5px] border-dashed border-[#E6D08A] bg-[#FBF1D6] px-[18px] py-[18px] text-center">
                 <div className="mb-2 text-[12px] font-extrabold tracking-[.7px] text-[#A88526]">CÓDIGO DE INVITACIÓN</div>
-                <div className="font-display text-[34px] font-semibold tracking-[7px] text-[#8A7234]">7K4P9</div>
-                <div className="mt-[6px] text-[13px] text-[#A88526]">Vence en 7 días</div>
+                <div className="font-display text-[34px] font-semibold tracking-[7px] text-[#8A7234]">
+                  {code ?? "·····"}
+                </div>
+                <div className="mt-[6px] text-[13px] text-[#A88526]">
+                  {code
+                    ? emailSent
+                      ? `Enviamos el código a ${email.trim()} · Vence en 7 días`
+                      : "No pudimos enviar el correo; compartí este código directamente · Vence en 7 días"
+                    : "El código aparecerá aquí al enviar · Vence en 7 días"}
+                </div>
               </div>
 
-              <a
-                href="#"
-                className="flex w-full items-center justify-center gap-[9px] rounded-[14px] bg-[linear-gradient(180deg,#F4977E,#EE8164)] px-4 py-[14px] text-[15.5px] font-extrabold text-white shadow-[0_10px_22px_-8px_rgba(238,129,100,.7)]"
+              {submitError && <p className="mb-4 text-[13px] font-bold text-[#D9583C]">{submitError}</p>}
+
+              <button
+                type="button"
+                onClick={handleSend}
+                disabled={sending}
+                className="flex w-full cursor-pointer items-center justify-center gap-[9px] rounded-[14px] bg-[linear-gradient(180deg,#F4977E,#EE8164)] px-4 py-[14px] text-[15.5px] font-extrabold text-white shadow-[0_10px_22px_-8px_rgba(238,129,100,.7)] disabled:cursor-wait disabled:opacity-70"
               >
                 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="m22 2-7 20-4-9-9-4z" />
                   <path d="M22 2 11 13" />
                 </svg>
-                Enviar invitación
-              </a>
+                {sending ? "Enviando…" : code ? "Reenviar invitación" : "Enviar invitación"}
+              </button>
             </div>
           </div>
         </div>

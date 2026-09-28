@@ -1,6 +1,6 @@
 # SPEC 11 — Vincular padre: invitación con código, email con Resend y activación de cuenta
 
-> **Estado:** Approved
+> **Estado:** Implemented
 > **Depende de:** SPEC 03, SPEC 05, SPEC 08, SPEC 09, SPEC 10
 > **Fecha:** 2026-09-28
 > **Objetivo:** Volver funcional el modal "Vincular padre": genera una invitación con código único, la envía por email con Resend desde Next.js y permite al padre activar su cuenta con email + código + contraseña, creando su usuario y el vínculo con el niño.
@@ -94,14 +94,14 @@ app/
 
 ## Acceptance criteria
 
-- [ ] Migración existe con los 2 enums y las 2 tablas según columnas del schema; RLS activo con 8 políticas `TO authenticated`.
-- [ ] "Enviar invitación" genera un código real de 5 caracteres (ya no `7K4P9` fijo), lo muestra y guarda la invitación `pending` con `expires_at` ≈ +7 días.
-- [ ] El padre recibe el email simple con el código, el nombre del niño y la expiración (o el log de Resend lo confirma en dev sin dominio verificado); el remitente es el de `INVITATION_EMAIL_FROM`.
-- [ ] Re-invitar regenera el código y cancela el anterior; el código viejo ya no activa.
-- [ ] Activar con email + código vigente + contraseña crea el usuario, el vínculo `parent_children` con el parentesco elegido y marca la invitación `accepted`.
-- [ ] Código inválido, vencido o email no coincidente muestra error genérico sin crear nada.
-- [ ] Email ya registrado muestra error genérico (sin revelar que la cuenta existe).
-- [ ] `npm run build` y `npm run lint` pasan; sin errores en consola en ambos flujos.
+- [x] Migración existe con los 2 enums y las 2 tablas según columnas del schema; RLS activo con 8 políticas `TO authenticated`. (Verificado: `pg_type`/`pg_class`/`pg_policies` + `20260928195131_create_invitations_parent_children.sql`.)
+- [x] "Enviar invitación" genera un código real de 5 caracteres (ya no `7K4P9` fijo), lo muestra y guarda la invitación `pending` con `expires_at` ≈ +7 días. (Verificado E2E: `EVYUY`/`guardian`/`pending`/7.00 días exactos + `.playwright-mcp/spec11-invite-modal-verify.png`.)
+- [x] El padre recibe el email simple con el código, el nombre del niño y la expiración (o el log de Resend lo confirma en dev sin dominio verificado); el remitente es el de `INVITATION_EMAIL_FROM`. (Verificado: SDK llamado con remitente `INVITATION_EMAIL_FROM`, texto+HTML con código/niño/expiración y link `?code=`; en dev Resend responde 403 por dominio `mail.com` no verificado — ver log `[invitation] Resend error`. Entrega real pendiente de verificar el dominio.)
+- [x] Re-invitar regenera el código y cancela el anterior; el código viejo ya no activa. (Verificado E2E + BD: `KHQMV`→`cancelled`/`WAZET`→`pending`; activar con código cancelado da error genérico.)
+- [x] Activar con email + código vigente + contraseña crea el usuario, el vínculo `parent_children` con el parentesco elegido y marca la invitación `accepted`. (Verificado E2E + BD: `TAQZG`→`accepted` con `accepted_at`, usuario `Claudia` rol `parent`, vínculo `father` con Laura.)
+- [x] Código inválido, vencido o email no coincidente muestra error genérico sin crear nada. (Verificado: `ZZZZZ` → genérico sin crear usuario; vencido → `redeem/preview` devuelven 0 filas, probado en transacción con rollback.)
+- [x] Email ya registrado muestra error genérico (sin revelar que la cuenta existe). (Verificado: signup en conflicto → mismo mensaje genérico, nada creado.)
+- [x] `npm run build` y `npm run lint` pasan; sin errores en consola en ambos flujos. (Verificado: lint 0 errores, build OK, 0 errores de consola en invitar y activar.)
 
 ## Decisions
 
