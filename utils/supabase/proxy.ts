@@ -30,8 +30,33 @@ export const updateSession = async (request: NextRequest) => {
     },
   });
 
-  // Refresca la sesión si expiró; importante para Server Components.
-  await supabase.auth.getUser();
+  // Lee el JWT local sin llamada de red; refresca la sesión si expiró.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims;
+
+  const pathname = request.nextUrl.pathname;
+  const isAuthRoute = pathname.startsWith("/auth");
+  const isLoginRoute = pathname.startsWith("/auth/login");
+
+  if (!user && !isAuthRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/login";
+    const redirectResponse = NextResponse.redirect(url);
+    supabaseResponse.cookies.getAll().forEach(({ name, value }) =>
+      redirectResponse.cookies.set(name, value),
+    );
+    return redirectResponse;
+  }
+
+  if (user && isLoginRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/";
+    const redirectResponse = NextResponse.redirect(url);
+    supabaseResponse.cookies.getAll().forEach(({ name, value }) =>
+      redirectResponse.cookies.set(name, value),
+    );
+    return redirectResponse;
+  }
 
   return supabaseResponse;
 };

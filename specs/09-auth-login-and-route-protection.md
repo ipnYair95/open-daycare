@@ -1,6 +1,6 @@
 # SPEC 09 — Login real con Supabase y protección de rutas
 
-> **Estado:** Approved
+> **Estado:** Implemented
 > **Depende de:** SPEC 03 (páginas `/auth/login` y `/auth/activate-account` estáticas), SPEC 08 (tabla `public.users`, trigger de signup, seed staff `yair@mail.com`)
 > **Fecha:** 2026-09-28
 > **Objetivo:** Conectar `/auth/login` a Supabase Auth (email + password) mediante Server Action y proteger todas las rutas salvo `/auth/*` redirigiendo al login cuando no hay sesión.
@@ -13,6 +13,7 @@
 - Error inline en español sobre el formulario cuando las credenciales son inválidas (sin navegar).
 - Protección de rutas en `proxy.ts` / `utils/supabase/middleware.ts`: sin sesión, toda ruta salvo `/auth/*` (y assets) redirige a `/auth/login`; con sesión, visitar `/auth/login` redirige a `/`.
 - Botón "Cerrar sesión" en el sidebar que ejecuta una Server Action `signOut` y redirige a `/auth/login`.
+- Tarjeta de usuario del sidebar con datos reales: `full_name` y sala desde `public.users` (+ `daycares`) según la sesión; fallback al email de los claims si no hay perfil.
 - Patrón de protección según documentación vigente de Supabase + Next.js 16 vía Context7: archivo `proxy.ts` en raíz (Next 16 renombró `middleware.ts` → `proxy.ts` y la función exportada `middleware` → `proxy`; en Next ≤15 `proxy.ts` nunca se ejecuta) que delega a `updateSession`, el cual crea el server client con `createServerClient`, verifica la sesión y redirige al login si no hay usuario.
 
 **Out of scope (para specs futuros):**
@@ -50,19 +51,21 @@ utils/supabase/middleware.ts         # ~ RENOMBRAR a utils/supabase/proxy.ts (no
 2. Crear la Server Action de login (`app/auth/login/actions.ts`): `signInWithPassword`, `revalidatePath`, redirect a `/` en éxito y retorno de mensaje de error en fallo.
 3. Convertir `app/auth/login/page.tsx` en formulario real (mismo diseño SPEC 03, sin valores hardcodeados como sesión) con `useActionState` o equivalente para el error inline en español.
 4. Añadir logout: Server Action `signOut` + botón en `sidebar.tsx` con el estilo existente.
-5. Verificación: `npm run lint` y `npm run build`; Playwright: login válido → `/`, login inválido → error inline sin navegar, ruta `/` sin sesión → `/auth/login`, `/auth/login` con sesión → `/`, logout → `/auth/login`.
+5. Tarjeta de usuario real en `sidebar.tsx`: el Server Component lee los claims y consulta `public.users` (join `daycares`) con el cliente server; muestra `full_name`, inicial del avatar y nombre de la sala; fallback al email si no hay perfil.
+6. Verificación: `npm run lint` y `npm run build`; Playwright: login válido → `/`, login inválido → error inline sin navegar, ruta `/` sin sesión → `/auth/login`, `/auth/login` con sesión → `/`, logout → `/auth/login`, sidebar muestra `full_name` y sala reales.
 
 ## Acceptance criteria
 
-- [ ] `npm run build` y `npm run lint` pasan sin errores.
-- [ ] Login con `yair@mail.com` / `Abc123@` redirige a `/` y crea sesión (recargar `/` mantiene la sesión).
-- [ ] Login con credenciales inválidas muestra error inline en español y permanece en `/auth/login`.
-- [ ] Sin sesión, visitar `/` (y cualquier ruta fuera de `/auth/*`) redirige a `/auth/login`.
-- [ ] Con sesión, visitar `/auth/login` redirige a `/`.
-- [ ] El botón de logout cierra la sesión y redirige a `/auth/login`; después, `/` vuelve a redirigir al login.
-- [ ] `/auth/activate-account` sigue idéntica a SPEC 03 (visual y comportamiento).
-- [ ] Sin errores en consola en los flujos de login, redirect y logout (Playwright).
-- [ ] No se expone información sensible en el mensaje de error (mensaje genérico, sin distinguir "usuario inexistente" vs "password incorrecta").
+- [x] `npm run build` y `npm run lint` pasan sin errores. — verificado 2026-09-28 (0 errores; solo warning preexistente de `<img>`).
+- [x] Login con `yair@mail.com` / `Abc123@` redirige a `/` y crea sesión (recargar `/` mantiene la sesión). — verificado en Playwright; requirió reparar el seed (migración `20260928125004_fix_seed_app_metadata`: `raw_app_meta_data`, fila en `auth.identities`, tokens `''` en vez de NULL).
+- [x] Login con credenciales inválidas muestra error inline en español y permanece en `/auth/login`. — verificado en Playwright (`nadie@example.com`).
+- [x] Sin sesión, visitar `/` (y cualquier ruta fuera de `/auth/*`) redirige a `/auth/login`. — verificado en Playwright (`/` y `/kids`, 307).
+- [x] Con sesión, visitar `/auth/login` redirige a `/`. — verificado en Playwright.
+- [x] El botón de logout cierra la sesión y redirige a `/auth/login`; después, `/` vuelve a redirigir al login. — verificado en Playwright (mismo browser).
+- [x] Con sesión de `yair@mail.com`, el sidebar muestra `Caro Giménez`, inicial `C` y la sala real; sin perfil muestra el email. — verificado en Playwright (ambos casos: con perfil y con fila `public.users` eliminada temporalmente + restaurada).
+- [x] `/auth/activate-account` sigue idéntica a SPEC 03 (visual y comportamiento). — archivo intacto (fuera del diff), responde 200, screenshot `.playwright-mcp/activate-account-verify.png`.
+- [x] Sin errores en consola en los flujos de login, redirect y logout (Playwright). — 0 errores en todos los flujos.
+- [x] No se expone información sensible en el mensaje de error (mensaje genérico, sin distinguir "usuario inexistente" vs "password incorrecta"). — una sola constante `INVALID_CREDENTIALS_MESSAGE` para todos los fallos (`actions.ts`).
 
 ## Decisions
 
